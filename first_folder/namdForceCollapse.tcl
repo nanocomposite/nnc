@@ -2,7 +2,7 @@
 ## Script to create a namd configuration file for minimization
 ##
 proc CreateFC {list2} {
-set outname [lindex $list2 2]
+set outname [lindex $list2 3]
 set fileid [open $outname.namd w]
 set MASS [lindex $list2 10]
 puts $fileid "############################################################# \n## JOB DESCRIPTION                                         ## \n############################################################# \n 
@@ -302,7 +302,7 @@ proc RecieveInput {args} {
 
 set IL [RecieveInput]
 
-set name [lindex $IL 2]
+set name [lindex $IL 3]
 set len [string length $name]
 set start [expr {$len-4}]
 #set count 0
@@ -310,7 +310,7 @@ set start [expr {$len-4}]
 for {set i 0} {$i < 9} {incr i} {
 
 set outVal [ format "%03d" $i ];
-set name [string replace $name $start $len "$outVal.namd"]
+set name [string replace $name $start $len "$outVal"]
 lreplace $IL 2 2 $name
 CreateFC $IL
 
