@@ -208,7 +208,8 @@ set start [expr {$len-4}]
 
 for {set i 0} {$i < 9} {incr i} {
 
-set name [string replace $name $start $len "00$i.namd"]
+set outVal [ format "%03d" $i ];
+set name [string replace $name $start $len "$outVal.namd"]
 lreplace $IL 2 2 $name
 CreateNamdConf $IL
 
