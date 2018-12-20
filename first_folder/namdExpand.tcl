@@ -5,7 +5,7 @@
 ## Here I do have to put inNames, because we use the files from the Force Collapse simulations and we have to create other restart files
 ##
 #########################################
-proc CreateFC {list2 atommass cteForce stride radSquare} {
+proc CreateFC {list2 atommass dFdR stride radSquare} {
 global i
 set outname [lindex $list2 3]
 set fileid [open $outname.namd w]
@@ -120,17 +120,7 @@ langevin            on   ;# do langevin dynamics \n
 langevinDamping     5     ;# damping coefficient (gamma) of 5/ps \n 
 langevinTemp        \$temperature \n 
 langevinHydrogen    no    ;# don't couple langevin bath to hydrogens \n 
-\n 
-\n 
-# Constant Pressure Control (variable volume) \n 
-useFlexibleCell       yes \n 
-useConstantArea       no \n 
-langevinPiston        on \n 
-langevinPistonTarget  1.01325 \n 
-langevinPistonPeriod  200 \n 
-langevinPistonDecay   200 \n 
-langevinPistonTemp    \$temperature \n 
-\n 
+\n  
 \n 
 # Output \n 
 outputName          \$outName \n 
@@ -148,129 +138,128 @@ outputEnergies      \$outFreq; \n
 ## EXTRA PARAMETERS                                        ## \n 
 ############################################################# \n 
 \n 
-# Put here any custom parameters that are specific to \n 
-# this job (e.g., SMD, TclForces, etc...) \n 
-\n 
-tclBC on;\n 
-\n 
-tclBCScript {\n 
-    \n 
-    ############## INPUT VALUES ###################\n 
-    \n 
-    # mass limits; all carbons\n 
-    set lowMass [expr {$atommass - 0.3} ];\n 
-    set highMass [expr {$atommass + 0.3} ];\n 
-    \n 
-    # sphere centered at (0,0,0) \n 
-    set radSquare $radSquare \n 
-\n 
-    # cte force ( 0.0144 namdU = 1pN ) \n 
-    set cteForce $cteForce \n
-    \n 
-    # how often clean drops \n 
-    set stride $stride; \n  
-    \n 
+# Put here any custom parameters that are specific to \n
+# this job (e.g., SMD, TclForces, etc...) \n
+\n
+tclBC on; \n
+ \n
+tclBCScript { \n
+     \n
+    ############## INPUT VALUES ################### \n
+     \n
+    # mass limits; all carbons \n
+    set lowMass [expr {$atommass - 0.3} ]; \n
+    set highMass [expr {$atommass + 0.3} ]; \n
+     \n
+    # box limit, centered at (0,0,0) \n
+    set bottomWall -107; \n
+    set topWall 107; \n
+             \n
+    # linear force ( 0.0144 namdU = 1pN ) \n
+    # decay 1000A : 100 pN, 80A : 5 pN \n
+    set dFdR $dFdR; \n
+             \n
+    # how often clean drops \n
+    set stride $stride; \n
+         \n
+    \n
     ############## MAIN PART ################### \n
-    \n 
-    wrapmode cell; \n 
-    \n 
-    proc calcforces { step unique } { \n 
-	\n 
-	global lowMass highMass radSquare cteForce stride; \n 
-	\n 
-        # clear selection every STRIDE steps \n 
-        if { \$step % \$stride == 0 } { cleardrops } \n 
-        \n 
-        # pick atoms of a given patch one by one \n 
-        while {\[nextatom\]} { \n 
-	    \n 
-	    #>>>>>>>>>>>>>>>>> \n 
-            # FOR DEBUG \n 
-            # set atomID       \[ getid \]; \n 
-            #>>>>>>>>>>>>>>>>> \n 
-	    \n 
-            # general info                \n 
-            set atomMass     \[ getmass \]; \n 
-\n 
-            # condition for mass \n 
-            set forceAtom 0;	 \n 
-            if { \$atomMass >= \$lowMass && \$atomMass <= \$highMass } { \n 
-                set forceAtom 1; \n 
-            } else { \n 
-            }        \n 
-	    \n 
-            # drop atoms outside mass condition \n 
-            if { \$forceAtom  == 0 } { \n 
-                dropatom; \n 
-                continue;   \n 
-            } else { \n 
-                \n 
-		# heavy atoms in this section \n 
-		# ---------------------------- \n 
-		\n 
+     \n
+    wrapmode cell; \n
+     \n
+    proc calcforces { step unique } { \n
+	 \n
+	global lowMass highMass bottomWall topWall dFdR stride; \n
+	 \n
+        # clear selection every STRIDE steps \n
+        if { \$step % \$stride == 0 } { cleardrops }       \n
+         \n
+        # pick atoms of a given patch one by one \n
+        while {\[nextatom\]} {  \n
+	     \n
+	    #>>>>>>>>>>>>>>>>> \n
+            # FOR DEBUG  \n
+            # set atomID       \[ getid \]; \n
+            #>>>>>>>>>>>>>>>>> \n
+	     \n
+            # general info                 \n
+            set atomMass     \[ getmass \]; \n
+ \n
+            # condition for mass \n
+            set forceAtom 0;	     \n
+            if { \$atomMass >= \$lowMass && \$atomMass <= \$highMass } { \n
+                set forceAtom 1; \n
+            } else { \n
+            }             \n
+	     \n
+            # drop atoms outside mass condition \n
+            if { \$forceAtom  == 0 } { \n
+                dropatom; \n
+                continue;             \n
+            } else { \n
+                 \n
+		# heavy atoms in this section \n
+		# ---------------------------- \n
+		 \n
 		# get current coordinates \n
-		set rvec \[ getcoord \] ;# get the atom's coordinates \n 
-		foreach { Xcoor Ycoor Zcoor } \$rvec { break } ;# get components of the vector \n 
-		unset rvec; \n 
-\n 
-		####################### \n 
-\n 
-		# get square of radial distance		\n 
-		set rdist2   \[ expr ( \$Xcoor*\$Xcoor ) + ( \$Ycoor*\$Ycoor ) + ( \$Zcoor*\$Zcoor ) \]; \n 
-\n 
-		if { \$rdist2 < \$radSquare } { \n 
-		    set condVol 1; \n 
-		} else { \n 
-		    set condVol 0; \n 
+		set rvec \[ getcoord \] ;# get the atom's coordinates \n
+		foreach { Xcoor Ycoor Zcoor } \$rvec { break } ;# get components of the vector \n
+		unset rvec; \n
+		 \n
+		# condition  atoms inside the cuve Volume \n
+		set condVol 0;		 \n
+		if { \$Xcoor > \$bottomWall && \$Xcoor < \$topWall &&  \$Ycoor > \$bottomWall && \$Ycoor < \$topWall && \$Zcoor > \$bottomWall && \$Zcoor < \$topWall } {  \n
+		    set condVol 1; \n
 		} \n
-\n 
-		\n 
-                # apply force\n 
-                if { \$condVol == 1 } {\n 
-\n 
-		    set rdist    \[ expr sqrt(\$rdist2) \];\n 
-		    \n 
-		    set uVecX \[ expr \$Xcoor/\$rdist \];\n 
-		    set uVecY \[ expr \$Ycoor/\$rdist \];\n 
-		    set uVecZ \[ expr \$Zcoor/\$rdist \];\n 
-		    \n 
-		    # negative sign for inward force\n 
-		    set forceX \[ expr -1.0*\$uVecX*\$cteForce \];\n 
-		    set forceY \[ expr -1.0*\$uVecY*\$cteForce \];\n 
-		    set forceZ \[ expr -1.0*\$uVecZ*\$cteForce \];\n 
-		    \n 
-		    set totalForce "\$forceX \$forceY \$forceZ";		    \n 
-		    addforce \$totalForce;\n 
-		    \n 
-		    #>>>>>>>>>>>>>>>>>\n 
-		    # FOR DEBUG               \n 
-		    # print "tclBC MESSAGE : step \$step :: atom \$atomID :: mass \$atomMass :: X \$Xcoor :: Y \$Ycoor :: Z \$Zcoor :: magnitudeForce \$forceMag :: vectorForce \$totalForce";\n 
-		    #>>>>>>>>>>>>>>>>>\n 
-		    \n 
-		    unset rdist;\n 
-		    unset uVecX;\n 
-		    unset uVecY;\n 
-		    unset uVecZ;\n 
-		    unset forceX;\n 
-		    unset forceY;\n 
-		    unset forceZ;\n 
-		    unset totalForce;               \n 
-		}\n 
-\n 
-		unset rdist2;\n 
-		unset Xcoor;\n 
-		unset Ycoor;\n 
-		unset Zcoor;		\n 
-		unset condVol;\n 
-	    }  \n 
-	    unset forceAtom;                     \n 
-	    unset atomMass;                     \n 
-        }               \n 
-    }    \n 
-}\n 
-\n 
-tclBCArgs { }\n 
-\n 
+		 \n
+                # apply force \n
+                if { \$condVol == 1 } { \n
+		    set rdist2   \[ expr ( \$Xcoor*\$Xcoor ) + ( \$Ycoor*\$Ycoor ) + ( \$Zcoor*\$Zcoor ) \]; \n
+		    set rdist    \[ expr sqrt(\$rdist2) \]; \n
+		    set forceMag \[ expr \$dFdR*\$rdist  \]; \n
+		     \n
+		    set uVecX \[ expr \$Xcoor/\$rdist \]; \n
+		    set uVecY \[ expr \$Ycoor/\$rdist \]; \n
+		    set uVecZ \[ expr \$Zcoor/\$rdist \]; \n
+		     \n
+		    # negative sign for inward force \n
+		    set forceX \[ expr \$uVecX*\$forceMag \]; \n
+		    set forceY \[ expr \$uVecY*\$forceMag \]; \n
+		    set forceZ \[ expr \$uVecZ*\$forceMag \]; \n
+		     \n
+		    set totalForce "\$forceX \$forceY \$forceZ";		     \n
+		    addforce \$totalForce; \n
+		     \n
+		    #>>>>>>>>>>>>>>>>> \n
+		    # FOR DEBUG                \n
+		    # print "tclBC MESSAGE : step \$step :: atom \$atomID :: mass \$atomMass :: X \$Xcoor :: Y \$Ycoor :: Z \$Zcoor :: magnitudeForce \$forceMag :: vectorForce \$totalForce"; \n
+		    #>>>>>>>>>>>>>>>>> \n
+		     \n
+		    unset rdist2; \n
+		    unset rdist; \n
+		    unset forceMag; \n
+		    unset uVecX; \n
+		    unset uVecY; \n
+		    unset uVecZ; \n
+		    unset forceX; \n
+		    unset forceY; \n
+		    unset forceZ; \n
+		    unset totalForce;                \n
+		} \n
+		unset Xcoor; \n
+		unset Ycoor; \n
+		unset Zcoor;		 \n
+		unset condVol; \n
+	    }   \n
+	    unset forceAtom;                      \n
+	    unset atomMass;                      \n
+        }                \n
+    }     \n
+} \n
+ \n
+tclBCArgs { } \n
+ \n
+ \n 
 \n 
 \n 
 #############################################################\n 
@@ -318,11 +307,11 @@ run \$stepP  ;\n"
 
 proc RecieveInput {args} {
 
-global atommass cteForce stride radSquare
+global atommass dFdR stride radSquare
   # Set the defaults
   set inputlist ""
   set atommass 12
-  set cteForce 0.0144
+  set dFdR 0.00034
   set stride 100
   set radSquare 6400.0
   # Parse options
@@ -342,7 +331,7 @@ global atommass cteForce stride radSquare
       "-minsteps" { set minSteps    $val; incr argnum; }
       "-runSteps" { set runSteps    $val; incr argnum; }
       "-atommass" { set atommass    $val; incr argnum; }
-      "-cteForce" { set cteForce    $val; incr argnum; }
+      "-dFdR" { set dFdR    $val; incr argnum; }
       "-stride"   { set stride      $val; incr argnum; }
       default     { error "error: aggregate: unknown option: $arg"}
     }
@@ -396,7 +385,7 @@ for {set i 0} {$i < 9} {incr i} {
 set outVal [ format "%03d" $i ];
 set name [string replace $name $start $len "$outVal"]
 lreplace $IL 2 2 $name
-CreateFC $IL $atommass $cteForce $stride $radSquare
+CreateFC $IL $atommass $dFdR $stride $radSquare
 
 }
 
