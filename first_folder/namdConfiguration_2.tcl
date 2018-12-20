@@ -163,9 +163,9 @@ proc RecieveInput {args} {
       "-minsteps" { set minSteps    $val; incr argnum; }
       default     { error "error: aggregate: unknown option: $arg"}
     }
-    lappend inputlist $val
+#    lappend inputlist $val
   }
-
+  set inputlist [list $pdbFile $psfFile $outName $temp $runSteps $restartfoo $inName $parFile $rFreq $outFreq $minSteps]
   # Check non-default variables
   set vars "pdbFile psfFile outName temp runSteps restartfoo inName parFile rFreq outFreq minSteps"
   for {set count_var 0} {$count_var < [llength $args]} {incr count_var} {

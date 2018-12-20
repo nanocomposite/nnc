@@ -264,9 +264,9 @@ proc RecieveInput {args} {
       "-atommass" { set atommass    $val; incr argnum; }
       default     { error "error: aggregate: unknown option: $arg"}
     }
-#    lappend inputlist $val
+    lappend inputlist $val
   }
-  set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps $atommass]
+
   # Check non-default variables
   set vars "pdbFile psfFile outName temp runSteps restartfoo inName parFile rFreq outFreq minSteps"
   for {set count_var 0} {$count_var < [llength $args]} {incr count_var} {
@@ -275,7 +275,7 @@ proc RecieveInput {args} {
     set y "-$z"
     if {$x < 1} {
       error "error: aggregate: need to define variable $y"
-    } 
+    }
   }
   return $inputlist
 }
