@@ -1,10 +1,14 @@
 #!/usr/bin/tclsh
 ## Script to create a namd configuration file for minimization
+## 
 ##
-proc CreateFC {list2} {
+## The most important variables go in list2, that is why we check if these were added
+################################
+proc CreateFC {list2 atommass cteForce stride} {
+global i
 set outname [lindex $list2 3]
 set fileid [open $outname.namd w]
-set MASS [lindex $list2 10]
+
 puts $fileid "############################################################# \n## JOB DESCRIPTION                                         ## \n############################################################# \n 
  \n 
 # force-collapse simulation \n 
@@ -101,18 +105,18 @@ tclBCScript { \n
     ############## INPUT VALUES ################### \n 
      \n 
     # mass limits; all carbons \n 
-    set lowMass [expr {$MASS - 0.3} ]; \n 
-    set highMass [expr {$MASS + 0.3}] \n 
+    set lowMass [expr {$atommass - 0.3} ]; \n 
+    set highMass [expr {$atommass + 0.3}] \n 
      \n 
     # box limit, centered at (0,0,0) \n 
     set bottomWall -70; \n 
     set topWall 70; \n 
  \n 
     # cte force ( 0.0144 namdU = 1pN ) \n 
-    set cteForce 0.072 \n 
+    set cteForce $cteForce \n 
      \n 
     # how often clean drops \n 
-    set stride 100; \n 
+    set stride $stride; \n 
          \n 
      \n 
     ############## MAIN PART ################### \n 
@@ -127,15 +131,15 @@ tclBCScript { \n
         if { \$step % \$stride == 0 } { cleardrops }       \n 
          \n 
         # pick atoms of a given patch one by one \n 
-        while {[nextatom]} {  \n 
+        while {\[nextatom\]} {  \n 
 	     \n 
 	    #>>>>>>>>>>>>>>>>> \n 
             # FOR DEBUG  \n 
-            # set atomID       [ getid ]; \n 
+            # set atomID       \[ getid \]; \n 
             #>>>>>>>>>>>>>>>>> \n 
 	    	     \n 
             # general info                 \n 
-            set atomMass     [ getmass ]; \n 
+            set atomMass     \[ getmass \]; \n 
   \n 
             # condition for mass \n 
             set forceAtom 0;	     \n 
@@ -154,7 +158,7 @@ tclBCScript { \n
 		# ---------------------------- \n 
 		 \n 
 		# get current coordinates \n 
-		set rvec [ getcoord ] ;# get the atom's coordinates \n 
+		set rvec \[ getcoord \] ;# get the atom's coordinates \n 
 		foreach { Xcoor Ycoor Zcoor } \$rvec { break } ;# get components of the vector \n 
 		unset rvec; \n 
 		 \n 
@@ -166,17 +170,17 @@ tclBCScript { \n
 		 \n 
                 # apply force \n 
                 if { \$condVol == 1 } { \n 
-		    set rdist2   [ expr ( \$Xcoor*\$Xcoor ) + ( \$Ycoor*\$Ycoor ) + ( \$Zcoor*\$Zcoor ) ]; \n 
-		    set rdist    [ expr sqrt(\$rdist2) ]; \n 
+		    set rdist2   \[ expr ( \$Xcoor*\$Xcoor ) + ( \$Ycoor*\$Ycoor ) + ( \$Zcoor*\$Zcoor ) \]; \n 
+		    set rdist    \[ expr sqrt(\$rdist2) \]; \n 
 		     \n 
-		    set uVecX [ expr \$Xcoor/\$rdist ]; \n 
-		    set uVecY [ expr \$Ycoor/\$rdist ]; \n 
-		    set uVecZ [ expr \$Zcoor/\$rdist ]; \n 
+		    set uVecX \[ expr \$Xcoor/\$rdist \]; \n 
+		    set uVecY \[ expr \$Ycoor/\$rdist \]; \n 
+		    set uVecZ \[ expr \$Zcoor/\$rdist \]; \n 
 		     \n 
 		    # negative sign for inward force \n 
-		    set forceX [ expr -1.0*\$uVecX*\$cteForce ]; \n 
-		    set forceY [ expr -1.0*\$uVecY*\$cteForce ]; \n 
-		    set forceZ [ expr -1.0*\$uVecZ*\$cteForce ]; \n 
+		    set forceX \[ expr -1.0*\$uVecX*\$cteForce \]; \n 
+		    set forceY \[ expr -1.0*\$uVecY*\$cteForce \]; \n 
+		    set forceZ \[ expr -1.0*\$uVecZ*\$cteForce \]; \n 
 		     \n 
 		    set totalForce "\$forceX \$forceY \$forceZ";		     \n 
 		    addforce \$totalForce; \n 
@@ -218,8 +222,16 @@ minimize            \$minSteps \n
 reinitvels          \$temperature \n 
  \n 
  \n 
-# Dynamics \n 
-run \$mdSteps \n "
+# Dynamics \n "
+if { $i == 0 } {
+puts $fileid "run \$mdSteps \n "
+} else {
+
+puts $fileid "set stepP \[expr \$mdSteps - \$firsttime \] \n
+run \$stepP  ;"
+
+
+}
 }
 
 #set list1 {structure coordinates outputname temperature runSteps restartfoo inputname inName parFile restartFrequency outputFrequency minSteps}
@@ -242,10 +254,12 @@ run \$mdSteps \n "
 ## Create proc to call args.
 
 proc RecieveInput {args} {
-
+  global atommass cteForce stride
   # Set the defaults
   set inputlist ""
-
+  set atommass 12
+  set cteForce 0.072
+  set stride 100
   # Parse options
   for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
     set arg [lindex $args $argnum]
@@ -262,11 +276,13 @@ proc RecieveInput {args} {
       "-minsteps" { set minSteps    $val; incr argnum; }  
       "-runSteps" { set runSteps    $val; incr argnum; }
       "-atommass" { set atommass    $val; incr argnum; }
+      "-cteForce" { set cteForce    $val; incr argnum; }
+      "-stride"   { set stride      $val; incr argnum; }
       default     { error "error: aggregate: unknown option: $arg"}
     }
 #    lappend inputlist $val
   }
-  set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps $atommass]
+  set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps]
   # Check non-default variables
   set vars "pdbFile psfFile outName temp runSteps restartfoo inName parFile rFreq outFreq minSteps"
   for {set count_var 0} {$count_var < [llength $args]} {incr count_var} {
@@ -312,7 +328,7 @@ for {set i 0} {$i < 9} {incr i} {
 set outVal [ format "%03d" $i ];
 set name [string replace $name $start $len "$outVal"]
 lreplace $IL 2 2 $name
-CreateFC $IL
+CreateFC $IL $atommass $cteForce $stride
 
 }
 
