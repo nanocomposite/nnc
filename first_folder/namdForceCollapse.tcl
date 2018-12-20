@@ -42,17 +42,45 @@ set mdSteps        [lindex $list2 9];
 structure           \$psfFile; 
 coordinates         \$pdbFile;
  \n 
- \n 
-# Parameter file  \n 
+ \n" 
+
+if { $i > 0} {
+puts $fileid "# Previous simulations \n
+proc get_first_ts { xscfile } { \n
+    set fd \[open \$xscfile r\] \n
+    gets \$fd \n
+    gets \$fd \n
+    gets \$fd line \n
+    set ts \[lindex \$line 0\] \n
+    close \$fd \n
+    return \$ts \n
+}
+
+bincoordinates     ./\$restartName.restart.coor \n
+binvelocities      ./\$restartName.restart.vel \n
+extendedSystem     ./\$restartName.restart.xsc \n
+
+set firsttime \[get_first_ts ./\$restartName.restart.xsc\] \n
+firsttimestep \$firsttime \n "
+
+}
+
+puts $fileid "# Parameter file  \n 
+
 paraTypeCharmm      on; \n 
 parameters          \$parFile; \n 
  \n 
- \n 
-# temperature \n 
+ \n "
+
+if { $i == 0} {
+
+puts $fileid "# temperature \n 
 temperature         \$temperature \n 
  \n 
- \n 
-# Force-Field Parameters \n 
+ \n" 
+}
+
+puts $fileid "# Force-Field Parameters \n 
 exclude             scaled1-4 \n 
 1-4scaling          1.0 \n 
 cutoff              12.0 \n 
@@ -260,6 +288,8 @@ proc RecieveInput {args} {
   set atommass 12
   set cteForce 0.072
   set stride 100
+  set restartName "FC.CONT"
+  
   # Parse options
   for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
     set arg [lindex $args $argnum]
@@ -269,7 +299,7 @@ proc RecieveInput {args} {
       "-psf"      { set psfFile     $val; incr argnum; }
       "-par"      { set parFile     $val; incr argnum; }
       "-outName"  { set outName     $val; incr argnum; }
-      "-inName"   { set inName      $val; incr argnum; }
+      "-restartName" {set restartName     $val; incr argnum; }
       "-temp"     { set temp        $val; incr argnum; }
       "-rfreq"    { set rFreq       $val; incr argnum; }
       "-outfreq"  { set outFreq     $val; incr argnum; }
@@ -282,9 +312,9 @@ proc RecieveInput {args} {
     }
 #    lappend inputlist $val
   }
-  set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps]
-  # Check non-default variables
-  set vars "pdbFile psfFile outName temp runSteps restartfoo inName parFile rFreq outFreq minSteps"
+set inputlist [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps]
+# Check non-default variables
+  set vars "pdbFile psfFile outName temp runSteps parFile rFreq outFreq minSteps"
   for {set count_var 0} {$count_var < [llength $args]} {incr count_var} {
     set z [lindex $vars $count_var]
     set x [info exists $z]
@@ -327,7 +357,7 @@ for {set i 0} {$i < 9} {incr i} {
 
 set outVal [ format "%03d" $i ];
 set name [string replace $name $start $len "$outVal"]
-lreplace $IL 2 2 $name
+lreplace $IL  3 3 $name
 CreateFC $IL $atommass $cteForce $stride
 
 }
