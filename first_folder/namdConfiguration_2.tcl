@@ -141,9 +141,10 @@ if { \$restartfoo ==  0 } {\n
 ## Create proc to call args.
 
 proc RecieveInput {args} {
-
+  
   # Set the defaults
   set inputlist ""
+  #set pdbFile 0
 
   # Parse options
   for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
@@ -167,8 +168,9 @@ proc RecieveInput {args} {
   }
   set inputlist [list $pdbFile $psfFile $outName $temp $runSteps $restartfoo $inName $parFile $rFreq $outFreq $minSteps]
   # Check non-default variables
-  set vars "pdbFile psfFile outName temp runSteps restartfoo inName parFile rFreq outFreq minSteps"
-  for {set count_var 0} {$count_var < [llength $args]} {incr count_var} {
+  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "restartfoo" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
+  
+  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
     set z [lindex $vars $count_var]
     set x [info exists $z]
     set y "-$z"

@@ -315,7 +315,7 @@ proc RecieveInput {args} {
 set inputlist [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps]
 # Check non-default variables
   set vars "pdbFile psfFile outName temp runSteps parFile rFreq outFreq minSteps"
-  for {set count_var 0} {$count_var < [llength $args]} {incr count_var} {
+  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
     set z [lindex $vars $count_var]
     set x [info exists $z]
     set y "-$z"

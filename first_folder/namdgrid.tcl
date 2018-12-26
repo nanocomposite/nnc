@@ -233,7 +233,7 @@ global atommass dFdR stride radSquare
   set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps]
   # Check non-default variables
   set vars "pdbFile psfFile outName temp runSteps restartfoo inName parFile rFreq outFreq minSteps"
-  for {set count_var 0} {$count_var < [llength $args]} {incr count_var} {
+  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
     set z [lindex $vars $count_var]
     set x [info exists $z]
     set y "-$z"
