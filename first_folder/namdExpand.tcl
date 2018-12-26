@@ -5,23 +5,23 @@
 ## Here I do have to put inNames, because we use the files from the Force Collapse simulations and we have to create other restart files
 ##
 #########################################
-proc CreateFC {list2 atommass dFdR stride radSquare} {
+proc CreateEX {list2 atommass dFdR stride radSquare} {
 global i
 set outname [lindex $list2 3]
 set fileid [open $outname.namd w]
 
 
-puts $fileid "#############################################################\n##JOB DESCRIPTION                                         ##\n #############################################################\n 
-\n 
+puts $fileid "#############################################################\n##JOB DESCRIPTION                                         ##\n#############################################################\n 
+\n
 # contract simulation\n 
 \n 
-#############################################################\n 
-## ADJUSTABLE PARAMETERS                                   ##\n 
-#############################################################\n 
+############################################################# 
+## ADJUSTABLE PARAMETERS                                   ## 
+############################################################# 
 \n 
 set psfFile       [lindex $list2 0]; 
 set pdbFile       [lindex $list2 1]; 
-set parFile       [lindex $list2 2];"
+set parFile       [lindex $list2 2]; "
 
 if { $i == 0} {
 puts $fileid " 
@@ -36,39 +36,37 @@ set restartName    [lindex $list2 6];
 \n 
 set temperature    [lindex $list2 5]; 
 \n 
-set restartFreq    [lindex $list 7]; 
-set outFreq        [lindex $list 8]; 
+set restartFreq    [lindex $list2 7]; 
+set outFreq        [lindex $list2 8]; 
 \n 
-set minSteps       [lindex $list 9]; 
-set mdSteps        [lindex $list 10]; 
+set minSteps       [lindex $list2 9]; 
+set mdSteps        [lindex $list2 10]; 
 \n 
-\n 
-\n 
-#############################################################\n 
-## SIMULATION PARAMETERS                                   ##\n 
-#############################################################\n 
+############################################################# 
+## SIMULATION PARAMETERS                                   ## 
+############################################################# 
 \n 
 # Load structure\n 
-structure           \$psfFile;\n 
-coordinates         \$pdbFile;\n 
+structure           \$psfFile; 
+coordinates         \$pdbFile;
 \n 
-\n 
+ 
 # Previous simulations\n 
-proc get_first_ts { xscfile } {\n 
-    set fd \[open \$xscfile r\]\n 
-    gets \$fd\n 
-    gets \$fd\n 
-    gets \$fd line\n 
-    set ts \[lindex \$line 0\]\n 
-    close \$fd\n 
-    return \$ts\n 
+proc get_first_ts { xscfile } { 
+    set fd \[open \$xscfile r\] 
+    gets \$fd 
+    gets \$fd 
+    gets \$fd line 
+    set ts \[lindex \$line 0\]
+    close \$fd
+    return \$ts
 }\n" 
 
 if { $i == 0} {
 puts $fileid "
-bincoordinates     \$previousCoor;\n 
-binvelocities      \$previousVel;\n 
-extendedSystem     \$previousXsc;\n 
+bincoordinates     \$previousCoor; 
+binvelocities      \$previousVel; 
+extendedSystem     \$previousXsc; 
 \n 
 firsttimestep 0;\n 
 \n"
@@ -86,202 +84,191 @@ firsttimestep \$firsttime "
 
 puts $fileid "
 # Parameter file \n 
-paraTypeCharmm      on; \n 
-parameters          \$parFile; \n 
-\n 
-# Periodic Boundary conditions \n 
-wrapWater           off \n 
-wrapAll             off \n 
-\n 
-\n 
+paraTypeCharmm      on;  
+parameters          \$parFile;
+# Periodic Boundary conditions
+wrapWater           off  
+wrapAll             off  
+
 # Force-Field Parameters \n 
-exclude             scaled1-4 \n 
-1-4scaling          1.0 \n 
-cutoff              12.0 \n 
-switching           on \n 
-switchdist          10.0 \n 
-pairlistdist        14.0 \n 
-margin               3 \n 
+exclude             scaled1-4  
+1-4scaling          1.0 
+cutoff              12.0  
+switching           on  
+switchdist          10.0  
+pairlistdist        14.0  
+margin               3  
 \n 
-timestep            1.0 \n 
-nonbondedFreq       2 \n 
-fullElectFrequency  4  \n 
-stepspercycle       20 \n 
+timestep            1.0  
+nonbondedFreq       2  
+fullElectFrequency  4   
+stepspercycle       20 
 \n 
-\n 
+
 #PME (for full-system periodic electrostatics) \n 
 PME                 yes \n 
 PMEGridSpacing      1.0 \n 
 PMEpencils          1 \n 
 \n 
-\n 
+ 
 # Constant Temperature Control \n 
-langevin            on   ;# do langevin dynamics \n 
-langevinDamping     5     ;# damping coefficient (gamma) of 5/ps \n 
+langevin            on   ;# do langevin dynamics 
+langevinDamping     5     ;# damping coefficient (gamma) of 5/ps 
 langevinTemp        \$temperature \n 
-langevinHydrogen    no    ;# don't couple langevin bath to hydrogens \n 
+langevinHydrogen    no    ;# don't couple langevin bath to hydrogens
 \n  
 \n 
-# Output \n 
-outputName          \$outName \n 
-restartname         \$restartName.restart \n 
-dcdfile             \$outName.dcd \n 
-xstFile             \$outName.xst \n 
+# Output 
+outputName          \$outName 
+restartname         \$restartName.restart 
+dcdfile             \$outName.dcd 
+xstFile             \$outName.xst  
 \n 
-restartfreq         \$restartFreq; \n 
-dcdfreq             \$outFreq; \n 
-xstFreq             \$outFreq; \n 
-outputEnergies      \$outFreq; \n 
+restartfreq         \$restartFreq;  
+dcdfreq             \$outFreq; 
+xstFreq             \$outFreq;  
+outputEnergies      \$outFreq;  
+\n "
+
+puts $fileid "
+############################################################# 
+## EXTRA PARAMETERS                                        ##  
+############################################################# 
 \n 
-\n 
-############################################################# \n 
-## EXTRA PARAMETERS                                        ## \n 
-############################################################# \n 
-\n 
-# Put here any custom parameters that are specific to \n
-# this job (e.g., SMD, TclForces, etc...) \n
+# Put here any custom parameters that are specific to
+# this job (e.g., SMD, TclForces, etc...)
 \n
-tclBC on; \n
- \n
+tclBC on; 
+
 tclBCScript { \n
-     \n
-    ############## INPUT VALUES ################### \n
-     \n
-    # mass limits; all carbons \n
-    set lowMass [expr {$atommass - 0.3} ]; \n
-    set highMass [expr {$atommass + 0.3} ]; \n
-     \n
-    # box limit, centered at (0,0,0) \n
-    set bottomWall -107; \n
-    set topWall 107; \n
-             \n
-    # linear force ( 0.0144 namdU = 1pN ) \n
-    # decay 1000A : 100 pN, 80A : 5 pN \n
-    set dFdR $dFdR; \n
-             \n
-    # how often clean drops \n
-    set stride $stride; \n
-         \n
-    \n
-    ############## MAIN PART ################### \n
-     \n
-    wrapmode cell; \n
-     \n
-    proc calcforces { step unique } { \n
-	 \n
-	global lowMass highMass bottomWall topWall dFdR stride; \n
-	 \n
-        # clear selection every STRIDE steps \n
+    
+    ############## INPUT VALUES ################### 
+     
+    # mass limits; all carbons 
+    set lowMass [expr {$atommass - 0.3} ]; 
+    set highMass [expr {$atommass + 0.3} ]; 
+    
+    # box limit, centered at (0,0,0) 
+    set bottomWall -107; 
+    set topWall 107; 
+    
+    # linear force ( 0.0144 namdU = 1pN ) 
+    # decay 1000A : 100 pN, 80A : 5 pN 
+    set dFdR $dFdR; 
+
+    # how often clean drops 
+    set stride $stride; 
+    
+    ############## MAIN PART ################### 
+    
+    wrapmode cell;"
+
+puts $fileid "    
+    proc calcforces { step unique } { 
+
+	global lowMass highMass bottomWall topWall dFdR stride; 
+        # clear selection every STRIDE steps 
         if { \$step % \$stride == 0 } { cleardrops }       \n
-         \n
-        # pick atoms of a given patch one by one \n
+
+        # pick atoms of a given patch one by one
         while {\[nextatom\]} {  \n
-	     \n
-	    #>>>>>>>>>>>>>>>>> \n
-            # FOR DEBUG  \n
-            # set atomID       \[ getid \]; \n
-            #>>>>>>>>>>>>>>>>> \n
-	     \n
+
+	    ############
+            # FOR DEBUG  
+            # set atomID       \[ getid \]; 
+            ###########
+
             # general info                 \n
-            set atomMass     \[ getmass \]; \n
- \n
-            # condition for mass \n
-            set forceAtom 0;	     \n
-            if { \$atomMass >= \$lowMass && \$atomMass <= \$highMass } { \n
-                set forceAtom 1; \n
-            } else { \n
-            }             \n
-	     \n
-            # drop atoms outside mass condition \n
-            if { \$forceAtom  == 0 } { \n
-                dropatom; \n
-                continue;             \n
-            } else { \n
-                 \n
-		# heavy atoms in this section \n
-		# ---------------------------- \n
-		 \n
-		# get current coordinates \n
-		set rvec \[ getcoord \] ;# get the atom's coordinates \n
-		foreach { Xcoor Ycoor Zcoor } \$rvec { break } ;# get components of the vector \n
-		unset rvec; \n
-		 \n
-		# condition  atoms inside the cuve Volume \n
-		set condVol 0;		 \n
-		if { \$Xcoor > \$bottomWall && \$Xcoor < \$topWall &&  \$Ycoor > \$bottomWall && \$Ycoor < \$topWall && \$Zcoor > \$bottomWall && \$Zcoor < \$topWall } {  \n
-		    set condVol 1; \n
+            set atomMass     \[ getmass \]; 
+ 
+            # condition for mass
+
+            set forceAtom 0;
+            if { \$atomMass >= \$lowMass && \$atomMass <= \$highMass } { 
+                set forceAtom 1;
+            } else { 
+
+            }
+	    
+            # drop atoms outside mass condition 
+            if { \$forceAtom  == 0 } {
+                dropatom;
+                continue;  
+            } else { 
+               
+		# heavy atoms in this section 
+		# 
+		
+		# get current coordinates 
+		set rvec \[ getcoord \] ;# get the atom's coordinates 
+		foreach { Xcoor Ycoor Zcoor } \$rvec { break } ;# get components of the vector 
+		unset rvec; 
+
+		# condition  atoms inside the cuve Volume 
+		set condVol 0;
+		if { \$Xcoor > \$bottomWall && \$Xcoor < \$topWall &&  \$Ycoor > \$bottomWall && \$Ycoor < \$topWall && \$Zcoor > \$bottomWall && \$Zcoor < \$topWall } { 
+		    set condVol 1;
+		}
+                # apply force 
+                if { \$condVol == 1 } { 
+		    set rdist2   \[ expr ( \$Xcoor*\$Xcoor ) + ( \$Ycoor*\$Ycoor ) + ( \$Zcoor*\$Zcoor ) \];
+		    set rdist    \[ expr sqrt(\$rdist2) \]; 
+		    set forceMag \[ expr \$dFdR*\$rdist  \]; 
+		    
+		    set uVecX \[ expr \$Xcoor/\$rdist \]; 
+		    set uVecY \[ expr \$Ycoor/\$rdist \]; 
+		    set uVecZ \[ expr \$Zcoor/\$rdist \]; 
+		    
+		    # negative sign for inward force 
+		    set forceX \[ expr \$uVecX*\$forceMag \]; 
+		    set forceY \[ expr \$uVecY*\$forceMag \]; 
+		    set forceZ \[ expr \$uVecZ*\$forceMag \]; 
+		    
+		    set totalForce \"\$forceX \$forceY \$forceZ\";
+		    addforce \$totalForce;
+		    \n
+		    unset rdist2; 
+		    unset rdist;
+		    unset forceMag;
+		    unset uVecX; 
+		    unset uVecY; 
+		    unset uVecZ; 
+		    unset forceX; 
+		    unset forceY; 
+		    unset forceZ; 
+		    unset totalForce;
 		} \n
-		 \n
-                # apply force \n
-                if { \$condVol == 1 } { \n
-		    set rdist2   \[ expr ( \$Xcoor*\$Xcoor ) + ( \$Ycoor*\$Ycoor ) + ( \$Zcoor*\$Zcoor ) \]; \n
-		    set rdist    \[ expr sqrt(\$rdist2) \]; \n
-		    set forceMag \[ expr \$dFdR*\$rdist  \]; \n
-		     \n
-		    set uVecX \[ expr \$Xcoor/\$rdist \]; \n
-		    set uVecY \[ expr \$Ycoor/\$rdist \]; \n
-		    set uVecZ \[ expr \$Zcoor/\$rdist \]; \n
-		     \n
-		    # negative sign for inward force \n
-		    set forceX \[ expr \$uVecX*\$forceMag \]; \n
-		    set forceY \[ expr \$uVecY*\$forceMag \]; \n
-		    set forceZ \[ expr \$uVecZ*\$forceMag \]; \n
-		     \n
-		    set totalForce "\$forceX \$forceY \$forceZ";		     \n
-		    addforce \$totalForce; \n
-		     \n
-		    #>>>>>>>>>>>>>>>>> \n
-		    # FOR DEBUG                \n
-		    # print "tclBC MESSAGE : step \$step :: atom \$atomID :: mass \$atomMass :: X \$Xcoor :: Y \$Ycoor :: Z \$Zcoor :: magnitudeForce \$forceMag :: vectorForce \$totalForce"; \n
-		    #>>>>>>>>>>>>>>>>> \n
-		     \n
-		    unset rdist2; \n
-		    unset rdist; \n
-		    unset forceMag; \n
-		    unset uVecX; \n
-		    unset uVecY; \n
-		    unset uVecZ; \n
-		    unset forceX; \n
-		    unset forceY; \n
-		    unset forceZ; \n
-		    unset totalForce;                \n
-		} \n
-		unset Xcoor; \n
-		unset Ycoor; \n
-		unset Zcoor;		 \n
-		unset condVol; \n
+		unset Xcoor; 
+		unset Ycoor; 
+		unset Zcoor;
+		unset condVol;
 	    }   \n
-	    unset forceAtom;                      \n
-	    unset atomMass;                      \n
+	    unset forceAtom;   
+	    unset atomMass;   
         }                \n
     }     \n
 } \n
  \n
 tclBCArgs { } \n
- \n
- \n 
-\n 
-\n 
-#############################################################\n 
-## EXECUTION SCRIPT                                        ##\n 
-#############################################################\n 
+############################################################# 
+## EXECUTION SCRIPT                                        ## 
+############################################################# 
 \n 
 # Minimization\n 
-minimize            \$minSteps;\n 
-reinitvels          \$temperature;\n 
-\n 
-\n 
+minimize            \$minSteps;
+reinitvels          \$temperature; 
+
+
 # Dynamics\n" 
 
 if { $i == 0 } {
 puts $fileid "run \$mdSteps\n 
-\n 
-\n" 
+" 
 
 } else {
 
 puts $fileid "set stepP \[expr \$mdSteps - \$firsttime \] \n
-run \$stepP  ;\n"
+run \$stepP  ;"
 
 }
 
@@ -307,7 +294,9 @@ run \$stepP  ;\n"
 
 proc RecieveInput {args} {
 
-global atommass dFdR stride radSquare
+  global atommass dFdR stride radSquare
+  # If things don't work maybe the list is in the first element of args
+  set args [lindex $args 0]
   # Set the defaults
   set inputlist ""
   set atommass 12
@@ -339,7 +328,7 @@ global atommass dFdR stride radSquare
   }
   set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps]
   # Check non-default variables
-  set vars "pdbFile psfFile outName temp runSteps restartfoo inName parFile rFreq outFreq minSteps"
+  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
   for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
     set z [lindex $vars $count_var]
     set x [info exists $z]
@@ -373,19 +362,31 @@ global atommass dFdR stride radSquare
 #lappend list2 $var
 #}
 
-set IL [RecieveInput]
+##########################################################
+#   This is for preliminary usage                        #
+##########################################################
+puts -nonewline "Please insert the values: "
+flush stdout
+gets stdin defl1
+#set defl [split [lindex $defl1 0]]
+### In case you wnt default values
+#set defl "-pdb file -psf file -par lala.par -outName file -inName inname -temp 100 -restartName restart -rfreq 100 -outfreq 100 -minsteps 10 -runSteps 100"
+###########################################################
+###########################################################
+#                  MAIN SCRIPT                            #
+###########################################################
 
-set name [lindex $IL 3]
-set len [string length $name]
-set start [expr {$len-4}]
-#set count 0
+set IL [RecieveInput $defl1]
+
+set iname [lindex $IL 3]
 
 for {set i 0} {$i < 9} {incr i} {
 
 set outVal [ format "%03d" $i ];
-set name [string replace $name $start $len "$outVal"]
-lreplace $IL 2 2 $name
-CreateFC $IL $atommass $dFdR $stride $radSquare
+set name $iname
+append name $outVal
+set IL [lreplace $IL 3 3 $name]
+CreateEX $IL $atommass $dFdR $stride $radSquare
 
 }
 
