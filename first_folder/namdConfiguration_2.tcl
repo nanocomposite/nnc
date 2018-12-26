@@ -4,7 +4,7 @@
 proc CreateNamdConf {list2} {
 set outname [lindex $list2 2]
 set fileid [open $outname.namd w]
-
+#puts "I am working"
 puts $fileid "#############################################################\n## JOB DESCRIPTION                                         ##\n#############################################################\n\n\n#############################################################\n## ADJUSTABLE PARAMETERS                                   ##\n#############################################################\n"
 puts $fileid "structure          [lindex $list2 0];
 coordinates        [lindex $list2 1];
@@ -53,7 +53,7 @@ if { \$restartfoo == 0 } {\n
     firsttimestep \$firsttime\n
 }\n"
 puts $fileid "#############################################################\n## SIMULATION PARAMETERS                                   ##\n#############################################################\n## Input\n"
-puts $fileid "paraTypeCharmm      on
+puts $fileid "paraTypeCharmm      on \n
 parameters [lindex $list2 8];\n# Periodic Boundary conditions\nwrapWater           off\nwrapAll             off\n"
 
 puts $fileid "# Force-Field Parameters
@@ -116,7 +116,7 @@ if { \$restartfoo ==  0 } {\n
 
 "
 
-
+close $fileid
 
 }
 
@@ -141,7 +141,8 @@ if { \$restartfoo ==  0 } {\n
 ## Create proc to call args.
 
 proc RecieveInput {args} {
-  
+# If things don't work maybe the list is in the first element of args
+  set args [lindex $args 0]
   # Set the defaults
   set inputlist ""
   #set pdbFile 0
@@ -168,7 +169,7 @@ proc RecieveInput {args} {
   }
   set inputlist [list $pdbFile $psfFile $outName $temp $runSteps $restartfoo $inName $parFile $rFreq $outFreq $minSteps]
   # Check non-default variables
-  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "restartfoo" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
+  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
   
   for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
     set z [lindex $vars $count_var]
@@ -200,21 +201,34 @@ proc RecieveInput {args} {
 #gets stdin var
 #lappend list2 $var
 #}
+##########################################################
+#   This is for preliminary usage                        #
+##########################################################
+puts -nonewline "Please insert the values: "
+flush stdout
+gets stdin defl1
+#set defl [split [lindex $defl1 0]]
+### In case you wnt default values
+#set defl "-pdb file -psf file -outName file -temp 100 -runSteps 100 -rest 20 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10"
+###########################################################
+###########################################################
+#                  MAIN SCRIPT                            #
+###########################################################
 
-set IL [RecieveInput]
+set IL [RecieveInput $defl1]
 
-set name [lindex $IL 2]
-set len [string length $name]
-set start [expr {$len-4}]
-#set count 0
+#set IL [RecieveInput -pdb file -psf file -outName file -temp 100 -runSteps 100 -rest 20 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10]
 
-for {set i 0} {$i < 9} {incr i} {
+#puts "ok till here 1"
+
+set iname [lindex $IL 2]
+
+for {set i 0} {$i < 11} {incr i} {
 
 set outVal [ format "%03d" $i ];
-set name [string replace $name $start $len "$outVal"]
-lreplace $IL 2 2 $name
+set name $iname
+append name $outVal
+set IL [lreplace $IL 2 2 $name]
 CreateNamdConf $IL
 
 }
-
-

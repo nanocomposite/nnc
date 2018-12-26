@@ -21,11 +21,10 @@ puts $fileid "#############################################################\n##J
 \n 
 set psfFile       [lindex $list2 0]; 
 set pdbFile       [lindex $list2 1]; 
-set parFile       [lindex $list2 2];"
+set parFile       [lindex $list2 2]; "
 
 if { $i == 0} {
-puts $fileid " 
-set previousCoor   [lindex $list2 4].coor; 
+puts $fileid "set previousCoor   [lindex $list2 4].coor; 
 set previousVel    [lindex $list2 4].vel; 
 set previousXsc    [lindex $list2 4].xsc; 
 \n"
@@ -36,11 +35,11 @@ set restartName    [lindex $list2 6];
 \n 
 set temperature    [lindex $list2 5]; 
 \n 
-set restartFreq    [lindex $list 7]; 
-set outFreq        [lindex $list 8]; 
+set restartFreq    [lindex $list2 7]; 
+set outFreq        [lindex $list2 8]; 
 \n 
-set minSteps       [lindex $list 9]; 
-set mdSteps        [lindex $list 10]; 
+set minSteps       [lindex $list2 9]; 
+set mdSteps        [lindex $list2 10]; 
 \n 
 \n 
 \n 
@@ -62,7 +61,10 @@ proc get_first_ts { xscfile } {\n
     set ts \[lindex \$line 0\]\n 
     close \$fd\n 
     return \$ts\n 
-}\n" 
+}\n  " 
+################
+#puts "All ok till here"
+
 
 if { $i == 0} {
 puts $fileid "
@@ -71,7 +73,7 @@ binvelocities      \$previousVel;\n
 extendedSystem     \$previousXsc;\n 
 \n 
 firsttimestep 0;\n 
-\n"
+\n "
  
 } else {
 
@@ -109,7 +111,7 @@ fullElectFrequency  4  \n
 stepspercycle       20 \n 
 \n 
 \n 
-#PME (for full-system periodic electrostatics) \n 
+#PME for full-system periodic electrostatics \n 
 PME                 yes \n 
 PMEGridSpacing      1.0 \n 
 PMEpencils          1 \n 
@@ -122,7 +124,7 @@ langevinTemp        \$temperature \n
 langevinHydrogen    no    ;# don't couple langevin bath to hydrogens \n 
 \n 
 \n 
-# Constant Pressure Control (variable volume) \n 
+# Constant Pressure Control - variable volume \n 
 useFlexibleCell       yes \n 
 useConstantArea       no \n 
 langevinPiston        on \n 
@@ -143,21 +145,25 @@ dcdfreq             \$outFreq; \n
 xstFreq             \$outFreq; \n 
 outputEnergies      \$outFreq; \n 
 \n 
-\n 
+\n" 
+
+#puts "all of till here"
+#####################################
+puts $fileid "
 ############################################################# \n 
 ## EXTRA PARAMETERS                                        ## \n 
 ############################################################# \n 
 \n 
 # Put here any custom parameters that are specific to \n 
-# this job (e.g., SMD, TclForces, etc...) \n 
+# this job e.g., SMD, TclForces, etc... \n 
 \n 
 tclBC on;\n 
 \n 
-tclBCScript {\n 
+tclBCScript { \n 
     \n 
-    ############## INPUT VALUES ###################\n 
+    ############## INPUT VALUES ################### \n 
     \n 
-    # mass limits; all carbons\n 
+    # mass limits; all carbons \n 
     set lowMass [expr {$atommass - 0.3} ];\n 
     set highMass [expr {$atommass + 0.3} ];\n 
     \n 
@@ -173,7 +179,13 @@ tclBCScript {\n
     ############## MAIN PART ################### \n
     \n 
     wrapmode cell; \n 
-    \n 
+    \n "
+
+
+#puts "all okokok"
+
+
+puts $fileid " 
     proc calcforces { step unique } { \n 
 	\n 
 	global lowMass highMass radSquare cteForce stride; \n 
@@ -196,7 +208,8 @@ tclBCScript {\n
             set forceAtom 0;	 \n 
             if { \$atomMass >= \$lowMass && \$atomMass <= \$highMass } { \n 
                 set forceAtom 1; \n 
-            } else { \n 
+            } else { \n
+ 
             }        \n 
 	    \n 
             # drop atoms outside mass condition \n 
@@ -212,7 +225,11 @@ tclBCScript {\n
 		set rvec \[ getcoord \] ;# get the atom's coordinates \n 
 		foreach { Xcoor Ycoor Zcoor } \$rvec { break } ;# get components of the vector \n 
 		unset rvec; \n 
-\n 
+\n "
+
+#puts "ok1"
+
+puts $fileid " 
 		####################### \n 
 \n 
 		# get square of radial distance		\n 
@@ -223,7 +240,11 @@ tclBCScript {\n
 		} else { \n 
 		    set condVol 0; \n 
 		} \n
-\n 
+\n "
+
+
+#puts "ok1.1"
+puts $fileid " 
 		\n 
                 # apply force\n 
                 if { \$condVol == 1 } {\n 
@@ -238,15 +259,25 @@ tclBCScript {\n
 		    set forceX \[ expr -1.0*\$uVecX*\$cteForce \];\n 
 		    set forceY \[ expr -1.0*\$uVecY*\$cteForce \];\n 
 		    set forceZ \[ expr -1.0*\$uVecZ*\$cteForce \];\n 
-		    \n 
-		    set totalForce "\$forceX \$forceY \$forceZ";		    \n 
+		    \n "
+
+#puts "ok1.2"
+
+puts $fileid "
+ 
+		    set totalForce \"\$forceX \$forceY \$forceZ\" \n		    \n 
 		    addforce \$totalForce;\n 
 		    \n 
-		    #>>>>>>>>>>>>>>>>>\n 
-		    # FOR DEBUG               \n 
-		    # print "tclBC MESSAGE : step \$step :: atom \$atomID :: mass \$atomMass :: X \$Xcoor :: Y \$Ycoor :: Z \$Zcoor :: magnitudeForce \$forceMag :: vectorForce \$totalForce";\n 
-		    #>>>>>>>>>>>>>>>>>\n 
-		    \n 
+	
+
+
+
+		    \n "
+
+
+#puts "ok2"
+
+puts $fileid "
 		    unset rdist;\n 
 		    unset uVecX;\n 
 		    unset uVecY;\n 
@@ -267,9 +298,13 @@ tclBCScript {\n
 	    unset atomMass;                     \n 
         }               \n 
     }    \n 
-}\n 
+}\n "
+
+#puts "All ok till here"
+
+puts $fileid " 
 \n 
-tclBCArgs { }\n 
+tclBCArgs { } \n 
 \n 
 \n 
 \n 
@@ -282,43 +317,35 @@ minimize            \$minSteps;\n
 reinitvels          \$temperature;\n 
 \n 
 \n 
-# Dynamics\n" 
+# Dynamics\n 
+" 
 
 if { $i == 0 } {
 puts $fileid "run \$mdSteps\n 
 \n 
-\n" 
+\n
+" 
 
 } else {
 
 puts $fileid "set stepP \[expr \$mdSteps - \$firsttime \] \n
-run \$stepP  ;\n"
+run \$stepP  ;\n "
 
 }
-
+close $fileid
 }
 
-
-#set list1 {structure coordinates outputname temperature runSteps restartfoo inputname inName parFile restartFrequency outputFrequency minSteps}
-#set c 
-#foreach name $list1 {
-
-#puts -nonewline "Insert $name : "
-#flush stdout
-#gets stdin var
-
-#lappend list2 $var
-
-#}
-
-#namdConfiguration $list2 
 
 
 ## Create proc to call args.
 
 proc RecieveInput {args} {
 
-global atommass cteForce stride radSquare
+  global atommass cteForce stride radSquare
+# If things don't work maybe the list is in the first element of args
+  set args [lindex $args 0]
+
+
   # Set the defaults
   set inputlist ""
   set atommass 12
@@ -350,7 +377,7 @@ global atommass cteForce stride radSquare
   }
   set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps]
   # Check non-default variables
-  set vars "pdbFile psfFile outName temp runSteps restartfoo inName parFile rFreq outFreq minSteps"
+  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"] 
   for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
     set z [lindex $vars $count_var]
     set x [info exists $z]
@@ -384,18 +411,32 @@ global atommass cteForce stride radSquare
 #lappend list2 $var
 #}
 
-set IL [RecieveInput]
+##########################################################
+#   This is for preliminary usage                        #
+##########################################################
+puts -nonewline "Please insert the values: "
+flush stdout
+gets stdin defl1
+#set defl [split [lindex $defl1 0]]
+### In case you wnt default values
+#set defl "-pdb file -psf file -par lala.file -outName file -inName file_other -temp 100 -restartName restart -rfreq 10 -outfreq 10 -minsteps 100 -runSteps 100"
+###########################################################
+###########################################################
+#                  MAIN SCRIPT                            #
+###########################################################
 
-set name [lindex $IL 3]
-set len [string length $name]
-set start [expr {$len-4}]
+set IL [RecieveInput $defl1]
+
+set iname [lindex $IL 3]
+
 #set count 0
 
 for {set i 0} {$i < 9} {incr i} {
 
 set outVal [ format "%03d" $i ];
-set name [string replace $name $start $len "$outVal"]
-lreplace $IL 2 2 $name
+set name $iname
+append name $outVal
+set IL [lreplace $IL 3 3 $name]
 CreateFC $IL $atommass $cteForce $stride $radSquare
 
 }
