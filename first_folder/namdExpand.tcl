@@ -188,8 +188,9 @@ puts $fileid "
                 set forceAtom 1;
             } else { 
 
-            }
-	    
+            } "
+
+puts $fileid "	    
             # drop atoms outside mass condition 
             if { \$forceAtom  == 0 } {
                 dropatom;
@@ -271,6 +272,8 @@ puts $fileid "set stepP \[expr \$mdSteps - \$firsttime \] \n
 run \$stepP  ;"
 
 }
+
+close $fileid
 
 }
 
