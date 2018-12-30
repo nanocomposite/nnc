@@ -4,7 +4,7 @@
 ##
 ## The most important variables go in list2, that is why we check if these were added
 ################################
-proc CreateFC {list2 atommass cteForce stride} {
+proc CreateFC {list2} {
 global i
 set outname [lindex $list2 3]
 set fileid [open $outname.namd w]
@@ -133,18 +133,18 @@ tclBCScript { \n
     ############## INPUT VALUES ################### \n 
      \n 
     # mass limits; all carbons \n 
-    set lowMass [expr {$atommass - 0.3} ]; \n 
-    set highMass [expr {$atommass + 0.3}] \n 
+    set lowMass [expr {[lindex $list2 10] - 0.3} ]; \n 
+    set highMass [expr {[lindex $list2 10] + 0.3}] \n 
      \n 
     # box limit, centered at (0,0,0) \n 
-    set bottomWall -70; \n 
-    set topWall 70; \n 
+    set bottomWall [expr {(-1)*([lindex $list2 11])}]; \n 
+    set topWall [lindex $list2 11]; \n 
  \n 
     # cte force ( 0.0144 namdU = 1pN ) \n 
-    set cteForce $cteForce \n 
+    set cteForce [lindex $list2 12] \n 
      \n 
     # how often clean drops \n 
-    set stride $stride; \n 
+    set stride [lindex $list2 13]; \n 
          \n 
      \n 
     ############## MAIN PART ################### \n 
@@ -282,12 +282,13 @@ close $fileid
 ## Create proc to call args.
 
 proc RecieveInput {args} {
-  global atommass cteForce stride
+ 
   # If things don't work maybe the list is in the first element of args
   set args [lindex $args 0]
   # Set the defaults
   set inputlist ""
   set atommass 12
+  set dWall 70
   set cteForce 0.072
   set stride 100
   set restartName "FC.CONT"
@@ -314,7 +315,7 @@ proc RecieveInput {args} {
     }
 #    lappend inputlist $val
   }
-set inputlist [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps]
+set inputlist [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride]
 # Check non-default variables
   set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "parFile" "rFreq" "outFreq" "minSteps"] 
 
@@ -373,7 +374,7 @@ set outVal [ format "%03d" $i ];
 set name $iname
 append name $outVal
 set IL [lreplace $IL 3 3 $name]
-CreateFC $IL $atommass $cteForce $stride
+CreateFC $IL
 
 }
 
