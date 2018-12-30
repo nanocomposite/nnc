@@ -5,7 +5,7 @@
 ## Here I do have to put inNames, because we use the files from the Force Collapse simulations and we have to create other restart files
 ##
 #########################################
-proc CreateFC {list2 atommass cteForce stride radSquare} {
+proc CreateFC {list2} {
 global i
 set outname [lindex $list2 3]
 set fileid [open $outname.namd w]
@@ -164,21 +164,21 @@ tclBCScript { \n
     ############## INPUT VALUES ################### \n 
     \n 
     # mass limits; all carbons \n 
-    set lowMass [expr {$atommass - 0.3} ];\n 
-    set highMass [expr {$atommass + 0.3} ];\n 
+    set lowMass [expr {[lindex $list2 11] - 0.3} ];\n 
+    set highMass [expr {[lindex $list2 11] + 0.3} ];\n 
     \n 
     # sphere centered at (0,0,0) \n 
-    set radSquare $radSquare \n 
+    set radSquare [lindex $list2 12] \n 
 \n 
     # cte force ( 0.0144 namdU = 1pN ) \n 
-    set cteForce $cteForce \n
+    set cteForce [lindex $list2 13] \n
     \n 
     # how often clean drops \n 
-    set stride $stride; \n  
+    set stride [lindex $list2 14]; \n  
     \n 
     ############## MAIN PART ################### \n
     \n 
-    wrapmode cell; \n 
+    wrapmode cell;
     \n "
 
 
@@ -278,44 +278,39 @@ puts $fileid "
 #puts "ok2"
 
 puts $fileid "
-		    unset rdist;\n 
-		    unset uVecX;\n 
-		    unset uVecY;\n 
-		    unset uVecZ;\n 
-		    unset forceX;\n 
-		    unset forceY;\n 
-		    unset forceZ;\n 
-		    unset totalForce;               \n 
-		}\n 
+		    unset rdist;
+		    unset uVecX;
+		    unset uVecY;
+		    unset uVecZ;
+		    unset forceX;
+		    unset forceY;
+		    unset forceZ;
+		    unset totalForce; 
+		}
 \n 
-		unset rdist2;\n 
-		unset Xcoor;\n 
-		unset Ycoor;\n 
-		unset Zcoor;		\n 
-		unset condVol;\n 
+		unset rdist2;
+		unset Xcoor;
+		unset Ycoor;
+		unset Zcoor;
+		unset condVol;
 	    }  \n 
-	    unset forceAtom;                     \n 
-	    unset atomMass;                     \n 
+	    unset forceAtom;
+	    unset atomMass;
         }               \n 
     }    \n 
 }\n "
 
-#puts "All ok till here"
-
 puts $fileid " 
 \n 
 tclBCArgs { } \n 
-\n 
-\n 
 \n 
 #############################################################\n 
 ## EXECUTION SCRIPT                                        ##\n 
 #############################################################\n 
 \n 
 # Minimization\n 
-minimize            \$minSteps;\n 
-reinitvels          \$temperature;\n 
-\n 
+minimize            \$minSteps;
+reinitvels          \$temperature;
 \n 
 # Dynamics\n 
 " 
@@ -323,13 +318,13 @@ reinitvels          \$temperature;\n
 if { $i == 0 } {
 puts $fileid "run \$mdSteps\n 
 \n 
-\n
+
 " 
 
 } else {
 
 puts $fileid "set stepP \[expr \$mdSteps - \$firsttime \] \n
-run \$stepP  ;\n "
+run \$stepP  ;"
 
 }
 close $fileid
@@ -340,11 +335,8 @@ close $fileid
 ## Create proc to call args.
 
 proc RecieveInput {args} {
-
-  global atommass cteForce stride radSquare
 # If things don't work maybe the list is in the first element of args
   set args [lindex $args 0]
-
 
   # Set the defaults
   set inputlist ""
@@ -375,7 +367,7 @@ proc RecieveInput {args} {
     }
 #    lappend inputlist $val
   }
-  set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps]
+  set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride]
   # Check non-default variables
   set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"] 
   for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
@@ -437,7 +429,7 @@ set outVal [ format "%03d" $i ];
 set name $iname
 append name $outVal
 set IL [lreplace $IL 3 3 $name]
-CreateFC $IL $atommass $cteForce $stride $radSquare
+CreateFC $IL
 
 }
 

@@ -5,7 +5,7 @@
 ## Here I do have to put inNames, because we use the files from the Force Collapse simulations and we have to create other restart files
 ##
 #########################################
-proc CreateEX {list2 atommass dFdR stride radSquare} {
+proc CreateEX {list2} {
 global i
 set outname [lindex $list2 3]
 set fileid [open $outname.namd w]
@@ -145,19 +145,19 @@ tclBCScript { \n
     ############## INPUT VALUES ################### 
      
     # mass limits; all carbons 
-    set lowMass [expr {$atommass - 0.3} ]; 
-    set highMass [expr {$atommass + 0.3} ]; 
+    set lowMass [expr {[lindex $list2 11] - 0.3} ]; 
+    set highMass [expr {[lindex $list2 11] + 0.3} ]; 
     
     # box limit, centered at (0,0,0) 
-    set bottomWall -107; 
-    set topWall 107; 
+    set bottomWall [expr {(-1)*([lindex $list2 12])}]; 
+    set topWall [lindex $list2 12]; 
     
     # linear force ( 0.0144 namdU = 1pN ) 
     # decay 1000A : 100 pN, 80A : 5 pN 
-    set dFdR $dFdR; 
+    set dFdR [lindex $list2 13]; 
 
     # how often clean drops 
-    set stride $stride; 
+    set stride [lindex $list2 14]; 
     
     ############## MAIN PART ################### 
     
@@ -303,6 +303,7 @@ proc RecieveInput {args} {
   # Set the defaults
   set inputlist ""
   set atommass 12
+  set dWall 107
   set dFdR 0.00034
   set stride 100
   set radSquare 6400.0
@@ -323,13 +324,14 @@ proc RecieveInput {args} {
       "-minsteps" { set minSteps    $val; incr argnum; }
       "-runSteps" { set runSteps    $val; incr argnum; }
       "-atommass" { set atommass    $val; incr argnum; }
-      "-dFdR" { set dFdR    $val; incr argnum; }
+      "-dWall"    { set dWall       $val; incr argnum; }
+      "-dFdR"     { set dFdR        $val; incr argnum; }
       "-stride"   { set stride      $val; incr argnum; }
       default     { error "error: aggregate: unknown option: $arg"}
     }
 #    lappend inputlist $val
   }
-  set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps]
+  set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $dFdR $stride]
   # Check non-default variables
   set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
   for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
@@ -389,7 +391,7 @@ set outVal [ format "%03d" $i ];
 set name $iname
 append name $outVal
 set IL [lreplace $IL 3 3 $name]
-CreateEX $IL $atommass $dFdR $stride $radSquare
+CreateEX $IL
 
 }
 
