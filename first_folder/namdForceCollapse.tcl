@@ -210,13 +210,10 @@ tclBCScript { \n
 		    set forceY \[ expr -1.0*\$uVecY*\$cteForce \]; \n 
 		    set forceZ \[ expr -1.0*\$uVecZ*\$cteForce \]; \n 
 		     \n 
-		    set totalForce "\$forceX \$forceY \$forceZ";		     \n 
+		    set totalForce \"\$forceX \$forceY \$forceZ\";		     \n 
 		    addforce \$totalForce; \n 
 		     \n 
-		    #>>>>>>>>>>>>>>>>> \n 
-		    # FOR DEBUG                \n 
-		    # print "tclBC MESSAGE : step $step :: atom $atomID :: mass $atomMass :: X $Xcoor :: Y $Ycoor :: Z $Zcoor :: magnitudeForce $forceMag :: vectorForce $totalForce"; \n 
-		    #>>>>>>>>>>>>>>>>> \n 
+		   
 		     \n 
 		    unset rdist2; \n 
 		    unset rdist; \n 
@@ -260,6 +257,9 @@ run \$stepP  ;"
 
 
 }
+
+close $fileid
+
 }
 
 #set list1 {structure coordinates outputname temperature runSteps restartfoo inputname inName parFile restartFrequency outputFrequency minSteps}
@@ -283,6 +283,8 @@ run \$stepP  ;"
 
 proc RecieveInput {args} {
   global atommass cteForce stride
+  # If things don't work maybe the list is in the first element of args
+  set args [lindex $args 0]
   # Set the defaults
   set inputlist ""
   set atommass 12
@@ -314,7 +316,8 @@ proc RecieveInput {args} {
   }
 set inputlist [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps]
 # Check non-default variables
-  set vars "pdbFile psfFile outName temp runSteps parFile rFreq outFreq minSteps"
+  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "parFile" "rFreq" "outFreq" "minSteps"] 
+
   for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
     set z [lindex $vars $count_var]
     set x [info exists $z]
@@ -346,18 +349,30 @@ set inputlist [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFre
 #lappend list2 $var
 #}
 
-set IL [RecieveInput]
+##########################################################
+#   This is for preliminary usage                        #
+##########################################################
+puts -nonewline "Please insert the values: "
+flush stdout
+gets stdin defl1
+#set defl [split [lindex $defl1 0]]
+### In case you wnt default values
+#set defl "-pdb file -psf file -par lala.par -outName file -restartName restart -temp 100 -rfreq 100 -outfreq 100 -minsteps 10 -runSteps 100"
+###########################################################
+###########################################################
+#                  MAIN SCRIPT                            #
+###########################################################
 
-set name [lindex $IL 3]
-set len [string length $name]
-set start [expr {$len-4}]
-#set count 0
+set IL [RecieveInput $defl1]
+
+set iname [lindex $IL 3]
 
 for {set i 0} {$i < 9} {incr i} {
 
 set outVal [ format "%03d" $i ];
-set name [string replace $name $start $len "$outVal"]
-lreplace $IL  3 3 $name
+set name $iname
+append name $outVal
+set IL [lreplace $IL 3 3 $name]
 CreateFC $IL $atommass $cteForce $stride
 
 }
