@@ -1,9 +1,71 @@
 #!/usr/bin/tclsh
 ## Script to create a namd configuration file for minimization
 ##
-proc CreateNamdConf {list2} {
-set outname [lindex $list2 2]
-set fileid [open $outname.namd w]
+
+proc namdConfig {args} {
+
+# If things don't work maybe the list is in the first element of args
+#  set args [lindex $args 0]
+  # Set the defaults
+  set inputlist ""
+  #set pdbFile 0
+  set prevConf "PEEK.6H07"
+  set outNmae "PEEK.5H"
+  set inName "PEEK.5H"
+  # Parse options
+  for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
+    set arg [lindex $args $argnum]
+    set val [lindex $args [expr $argnum + 1]]
+    switch -- $arg {
+      "-pdb"      { set pdbFile     $val; incr argnum; }
+      "-psf"      { set psfFile     $val; incr argnum; }
+      "-outName"  { set outName     $val; incr argnum; }
+      "-temp"     { set temp        $val; incr argnum; }
+      "-runSteps" { set runSteps    $val; incr argnum; }
+      "-inName"   { set inName      $val; incr argnum; }
+      "-rest"     { set restartfoo  $val; incr argnum; }
+      "-par"      { set parFile     $val; incr argnum; }
+      "-rfreq"    { set rFreq       $val; incr argnum; }
+      "-outfreq"  { set outFreq     $val; incr argnum; }
+      "-minsteps" { set minSteps    $val; incr argnum; }
+      "-prevConf" { set prevConf    $val; incr argnum; }
+      "-numConfFiles" { set numConfFiles  $val; incr argnum; }
+      default     { error "error: aggregate: unknown option: $arg"}
+    }
+#    lappend inputlist $val
+  }
+  set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles]
+  # Check non-default variables
+  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
+
+  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
+    set z [lindex $vars $count_var]
+    set x [info exists $z]
+    set y "-$z"
+    if {$x < 1} {
+      error "error: aggregate: need to define variable $y"
+    }
+  }
+#  return $inputlist
+
+
+set iname [lindex $list2 2]
+
+for {set i 0} {$i < [lindex $list2 11]} {incr i} {
+
+set outVal [ format "%03d" $i ];
+set name $iname
+append name "."
+append name $outVal
+set list2 [lreplace $list2 2 2 $name]
+#CreateNamdConf $list2
+
+
+
+
+
+#set outname [lindex $list2 2]
+set fileid [open $name.namd w]
 #puts "I am working"
 puts $fileid "#############################################################\n## JOB DESCRIPTION                                         ##\n#############################################################\n\n\n#############################################################\n## ADJUSTABLE PARAMETERS                                   ##\n#############################################################\n"
 puts $fileid "structure          [lindex $list2 0];
@@ -11,10 +73,13 @@ coordinates        [lindex $list2 1];
 set outputname     [lindex $list2 2];
 set temperature    [lindex $list2 3];
 set runSteps       [lindex $list2 4];
-\n# restart file :input in either inputname or cellBasis\n#  0 is new run, 1 is restart run, 2 is restart run from old files.\n\n
 
-set restartfoo  [lindex $list2 5];
-set inputname   [lindex $list2 6];
+
+
+
+
+set inputname   [lindex $list2 5];
+
 
 proc get_first_ts { xscfile } {\n\n
      set fd \[open \$xscfile r\]
@@ -24,37 +89,30 @@ proc get_first_ts { xscfile } {\n\n
      set ts \[lindex \$line 0\]
      close \$fd
      return \$ts\n
-}\n
+}\n "
 
-if { \$restartfoo == 0 } {\n
+if { $i == 0 } {
+puts $fileid "
+    bincoordinates     ./[lindex $list2 10].coor
+    binvelocities      ./[lindex $list2 10].vel
+    extendedSystem     ./[lindex $list2 10].xsc\n
 
-    bincoordinates     ./[lindex $list2 7].coor
-    binvelocities      ./[lindex $list2 7].vel
-    extendedSystem     ./[lindex $list2 7].xsc\n
+    firsttimestep 0\n "
 
-    firsttimestep 0\n
-
-} elseif { \$restartfoo == 1 } {\n
-
-    bincoordinates     ./\$inputname.restart.coor
-    binvelocities      ./\$inputname.restart.vel
-    extendedSystem     ./\$inputname.restart.xsc\n
+} else {
+puts $fileid "
+    bincoordinates     ./\$inputname.CONT.restart.coor
+    binvelocities      ./\$inputname.CONT.restart.vel
+    extendedSystem     ./\$inputname.CONT.restart.xsc\n
 
     set firsttime \[get_first_ts ./\$inputname.restart.xsc\]
-    firsttimestep \$firsttime\n
+    firsttimestep \$firsttime \n "
 
-} elseif { \$restartfoo == 2 } {\n
+}
 
-    bincoordinates     ./\$inputname.restart.coor.old
-    binvelocities      ./\$inputname.restart.vel.old
-    extendedSystem     ./\$inputname.restart.xsc.old\n
-
-    set firsttime \[ get_first_ts ./\$inputname.restart.xsc.old \]
-    firsttimestep \$firsttime\n
-}\n"
 puts $fileid "#############################################################\n## SIMULATION PARAMETERS                                   ##\n#############################################################\n## Input\n"
 puts $fileid "paraTypeCharmm      on \n
-parameters [lindex $list2 8];\n# Periodic Boundary conditions\nwrapWater           off\nwrapAll             off\n"
+parameters [lindex $list2 6];\n# Periodic Boundary conditions\nwrapWater           off\nwrapAll             off\n"
 
 puts $fileid "# Force-Field Parameters
 exclude             scaled1-4
@@ -92,143 +150,62 @@ langevinPistonTemp    \$temperature\n"
 
 puts $fileid "# Output
 outputName          \$outputname
-restartname         \$inputname.restart
+restartname         \$inputname.CONT.restart
 dcdfile             \$outputname.dcd
 xstFile             \$outputname.xst\n
 
-restartfreq         [lindex $list2 9];
-dcdfreq             [lindex $list2 10];
-xstFreq             [lindex $list2 10];
-outputEnergies      [lindex $list2 10];
-outputPressure      [lindex $list2 10];"
+restartfreq         [lindex $list2 7];
+dcdfreq             [lindex $list2 8];
+xstFreq             [lindex $list2 8];
+outputEnergies      [lindex $list2 8];
+outputPressure      [lindex $list2 8];"
 
 puts $fileid "#############################################################\n## EXTRA PARAMETERS                                        ##\n#############################################################\n## Put here any custom parameters that are specific to\n# this job (e.g., SMD, TclForces, etc...)\n\n#############################################################\n## EXECUTION SCRIPT                                        ##\n#############################################################\n"
 puts $fileid "# Minimization\n
-minimize            [lindex $list2 11];
-reinitvels          \$temperature;\n
+minimize            [lindex $list2 9];
+reinitvels          \$temperature; \n"
 
-if { \$restartfoo ==  0 } {\n
-    run \$runSteps;\n
-} else {\n
-    set stepP \[expr \$runSteps - \$firsttime \];\n
-    run \$stepP ;\n
-}\n
-
-"
+if { $i ==  0 } {
+puts $fileid "run \$runSteps; \n"
+} else {
+puts $fileid "
+set stepP \[expr \$runSteps - \$firsttime \];\n
+run \$stepP ; \n"
+}
 
 close $fileid
-
+}
 }
 
 
-#set list1 {structure coordinates outputname temperature runSteps restartfoo inputname inName parFile restartFrequency outputFrequency minSteps}
+##############################################
+#          THE Main Script                   #
+##############################################
 
-#set c 
+# The only things that the user should put
 
-#foreach name $list1 {
-
-#puts -nonewline "Insert $name : "
-#flush stdout
-#gets stdin var
-
-#lappend list2 $var
-
-#}
-
-#namdConfiguration $list2 
+# source namdConfiguration_2.tcl
+# namdConfig -pdb file -psf file -outName file -temp 100 -runSteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -prevConf PEEK.6H07 -numConfFiles 100
+# exit
 
 
-## Create proc to call args.
 
-proc RecieveInput {args} {
-# If things don't work maybe the list is in the first element of args
-  set args [lindex $args 0]
-  # Set the defaults
-  set inputlist ""
-  #set pdbFile 0
 
-  # Parse options
-  for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
-    set arg [lindex $args $argnum]
-    set val [lindex $args [expr $argnum + 1]]
-    switch -- $arg {
-      "-pdb"      { set pdbFile     $val; incr argnum; }
-      "-psf"      { set psfFile     $val; incr argnum; }
-      "-outName"  { set outName     $val; incr argnum; }
-      "-temp"     { set temp        $val; incr argnum; }
-      "-runSteps" { set runSteps    $val; incr argnum; }
-      "-rest"     { set restartfoo  $val; incr argnum; }
-      "-inName"   { set inName      $val; incr argnum; }
-      "-par"      { set parFile     $val; incr argnum; }
-      "-rfreq"    { set rFreq       $val; incr argnum; }
-      "-outfreq"  { set outFreq     $val; incr argnum; }
-      "-minsteps" { set minSteps    $val; incr argnum; }
-      default     { error "error: aggregate: unknown option: $arg"}
-    }
-#    lappend inputlist $val
-  }
-  set inputlist [list $pdbFile $psfFile $outName $temp $runSteps $restartfoo $inName $parFile $rFreq $outFreq $minSteps]
-  # Check non-default variables
-  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
-  
-  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
-    set z [lindex $vars $count_var]
-    set x [info exists $z]
-    set y "-$z"
-    if {$x < 1} {
-      error "error: aggregate: need to define variable $y"
-    }
-  }
-  return $inputlist
-}
 
-#set list1 {structure
-#  coordinates
-#  outputname
-#  temperature
-#  runSteps
-#  restartfoo
-#  inputname
-#  inName
-#  parFile
-#  restartFrequency
-#  outputFrequency
-#  minSteps}
-#set c
-#foreach name $list1 {
-#puts -nonewline "Insert $name : "
-#flush stdout
-#gets stdin var
-#lappend list2 $var
-#}
-##########################################################
-#   This is for preliminary usage                        #
-##########################################################
-puts -nonewline "Please insert the values: "
-flush stdout
-gets stdin defl1
-#set defl [split [lindex $defl1 0]]
-### In case you wnt default values
-#set defl "-pdb file -psf file -outName file -temp 100 -runSteps 100 -rest 20 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10"
-###########################################################
-###########################################################
-#                  MAIN SCRIPT                            #
-###########################################################
 
-set IL [RecieveInput $defl1]
 
-#set IL [RecieveInput -pdb file -psf file -outName file -temp 100 -runSteps 100 -rest 20 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10]
 
-#puts "ok till here 1"
 
-set iname [lindex $IL 2]
 
-for {set i 0} {$i < 11} {incr i} {
 
-set outVal [ format "%03d" $i ];
-set name $iname
-append name $outVal
-set IL [lreplace $IL 2 2 $name]
-CreateNamdConf $IL
 
-}
+
+
+
+
+
+
+
+
+
+
