@@ -1,23 +1,82 @@
 #!/usr/bin/tclsh
-## Script to create a namd configuration file for minimization
+## 
 ## 
 ##
-## Here I do have to put inNames, because we use the files from the Force Collapse simulations and we have to create other restart files
+## 
 ##
 #########################################
-proc CreateFC {list2} {
-global i
-set outname [lindex $list2 3]
-set fileid [open $outname.namd w]
+proc namdCreateCont {args} {
+
+# If things don't work maybe the list is in the first element of args
+#  set args [lindex $args 0]
+
+  # Set the defaults
+  set inputlist ""
+  set atommass 12
+  set cteForce 0.0144
+  set stride 100
+  set radSquare 6400.0
+  # Parse options
+  for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
+    set arg [lindex $args $argnum]
+    set val [lindex $args [expr $argnum + 1]]
+    switch -- $arg {
+      "-pdb"      { set pdbFile     $val; incr argnum; }
+      "-psf"      { set psfFile     $val; incr argnum; }
+      "-par"      { set parFile     $val; incr argnum; }
+      "-outName"  { set outName     $val; incr argnum; }
+      "-inName"   { set inName      $val; incr argnum; }
+      "-temp"     { set temp        $val; incr argnum; }
+      "-restartName" { set restartName  $val; incr argnum}
+      "-rfreq"    { set rFreq       $val; incr argnum; }
+      "-outfreq"  { set outFreq     $val; incr argnum; }
+      "-minsteps" { set minSteps    $val; incr argnum; }
+      "-runSteps" { set runSteps    $val; incr argnum; }
+      "-atommass" { set atommass    $val; incr argnum; }
+      "-cteForce" { set cteForce    $val; incr argnum; }
+      "-stride"   { set stride      $val; incr argnum; }
+      "-numConfFiles" {set numConfFiles  $val; incr argnum; }
+      default     { error "error: aggregate: unknown option: $arg"}
+    }
+#    lappend inputlist $val
+  }
+#  set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]
+  # Check non-default variables
+  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
+  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
+    set z [lindex $vars $count_var]
+    set x [info exists $z]
+    set y "-$z"
+    if {$x < 1} {
+      error "error: aggregate: need to define variable $y"
+    }
+  }
+set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]
+
+
+set iname [lindex $list2 3]
+
+#set count 0
+
+for {set i 0} {$i < [lindex $list2 15]} {incr i} {
+
+set outVal [ format "%03d" $i ];
+set name $iname
+append name "."
+append name $outVal
+set list2 [lreplace $list2 3 3 $name]
+
+
+set fileid [open $name.namd w]
 
 
 puts $fileid "#############################################################\n##JOB DESCRIPTION                                         ##\n #############################################################\n 
 \n 
 # contract simulation\n 
 \n 
-#############################################################\n 
-## ADJUSTABLE PARAMETERS                                   ##\n 
-#############################################################\n 
+############################################################# 
+## ADJUSTABLE PARAMETERS                                   ## 
+############################################################# 
 \n 
 set psfFile       [lindex $list2 0]; 
 set pdbFile       [lindex $list2 1]; 
@@ -43,44 +102,46 @@ set mdSteps        [lindex $list2 10];
 \n 
 \n 
 \n 
-#############################################################\n 
-## SIMULATION PARAMETERS                                   ##\n 
-#############################################################\n 
+############################################################# 
+## SIMULATION PARAMETERS                                   ## 
+############################################################# 
 \n 
 # Load structure\n 
 structure           \$psfFile;\n 
 coordinates         \$pdbFile;\n 
 \n 
-\n 
-# Previous simulations\n 
-proc get_first_ts { xscfile } {\n 
-    set fd \[open \$xscfile r\]\n 
-    gets \$fd\n 
-    gets \$fd\n 
-    gets \$fd line\n 
-    set ts \[lindex \$line 0\]\n 
-    close \$fd\n 
-    return \$ts\n 
-}\n  " 
+\n " 
 ################
 #puts "All ok till here"
 
 
 if { $i == 0} {
 puts $fileid "
-bincoordinates     \$previousCoor;\n 
-binvelocities      \$previousVel;\n 
-extendedSystem     \$previousXsc;\n 
+bincoordinates     \$previousCoor; 
+binvelocities      \$previousVel;
+extendedSystem     \$previousXsc; 
 \n 
-firsttimestep 0;\n 
+firsttimestep 0;
 \n "
  
 } else {
 
 puts $fileid "
-bincoordinates     ./\$restartName.restart.coor \n
-binvelocities      ./\$restartName.restart.vel \n
-extendedSystem     ./\$restartName.restart.xsc \n
+
+# Previous simulations\n 
+proc get_first_ts { xscfile } { 
+    set fd \[open \$xscfile r\] 
+    gets \$fd 
+    gets \$fd 
+    gets \$fd line 
+    set ts \[lindex \$line 0\] 
+    close \$fd 
+    return \$ts 
+}\n 
+
+bincoordinates     ./\$restartName.restart.coor;
+binvelocities      ./\$restartName.restart.vel;
+extendedSystem     ./\$restartName.restart.xsc;
 \n
 set firsttime \[get_first_ts ./\$restartName.restart.xsc\] \n
 firsttimestep \$firsttime "
@@ -88,194 +149,176 @@ firsttimestep \$firsttime "
 
 puts $fileid "
 # Parameter file \n 
-paraTypeCharmm      on; \n 
-parameters          \$parFile; \n 
+paraTypeCharmm      on; 
+parameters          \$parFile; 
 \n 
 # Periodic Boundary conditions \n 
-wrapWater           off \n 
-wrapAll             off \n 
+wrapWater           off  
+wrapAll             off  
 \n 
 \n 
 # Force-Field Parameters \n 
-exclude             scaled1-4 \n 
-1-4scaling          1.0 \n 
-cutoff              12.0 \n 
-switching           on \n 
-switchdist          10.0 \n 
-pairlistdist        14.0 \n 
-margin               3 \n 
+exclude             scaled1-4  
+1-4scaling          1.0  
+cutoff              12.0  
+switching           on  
+switchdist          10.0  
+pairlistdist        14.0  
+margin               3  
 \n 
-timestep            1.0 \n 
-nonbondedFreq       2 \n 
-fullElectFrequency  4  \n 
-stepspercycle       20 \n 
-\n 
+timestep            1.0  
+nonbondedFreq       2  
+fullElectFrequency  4   
+stepspercycle       20  
 \n 
 #PME for full-system periodic electrostatics \n 
-PME                 yes \n 
-PMEGridSpacing      1.0 \n 
-PMEpencils          1 \n 
-\n 
+PME                 yes  
+PMEGridSpacing      1.0  
+PMEpencils          1  
 \n 
 # Constant Temperature Control \n 
-langevin            on   ;# do langevin dynamics \n 
-langevinDamping     5     ;# damping coefficient (gamma) of 5/ps \n 
-langevinTemp        \$temperature \n 
-langevinHydrogen    no    ;# don't couple langevin bath to hydrogens \n 
-\n 
+langevin            on   ;# do langevin dynamics  
+langevinDamping     5     ;# damping coefficient (gamma) of 5/ps  
+langevinTemp        \$temperature 
+langevinHydrogen    no    ;# don't couple langevin bath to hydrogens  
 \n 
 # Constant Pressure Control - variable volume \n 
-useFlexibleCell       yes \n 
-useConstantArea       no \n 
-langevinPiston        on \n 
-langevinPistonTarget  1.01325 \n 
-langevinPistonPeriod  200 \n 
-langevinPistonDecay   200 \n 
-langevinPistonTemp    \$temperature \n 
-\n 
+useFlexibleCell       yes  
+useConstantArea       no  
+langevinPiston        on  
+langevinPistonTarget  1.01325  
+langevinPistonPeriod  200  
+langevinPistonDecay   200  
+langevinPistonTemp    \$temperature  
 \n 
 # Output \n 
-outputName          \$outName \n 
-restartname         \$restartName.restart \n 
-dcdfile             \$outName.dcd \n 
-xstFile             \$outName.xst \n 
+outputName          \$outName  
+restartname         \$restartName.restart  
+dcdfile             \$outName.dcd  
+xstFile             \$outName.xst  
 \n 
-restartfreq         \$restartFreq; \n 
-dcdfreq             \$outFreq; \n 
-xstFreq             \$outFreq; \n 
-outputEnergies      \$outFreq; \n 
-\n 
-\n" 
+restartfreq         \$restartFreq;  
+dcdfreq             \$outFreq;  
+xstFreq             \$outFreq;  
+outputEnergies      \$outFreq;  
+\n " 
 
-#puts "all of till here"
+
 #####################################
 puts $fileid "
-############################################################# \n 
-## EXTRA PARAMETERS                                        ## \n 
-############################################################# \n 
+#############################################################  
+## EXTRA PARAMETERS                                        ##  
+#############################################################  
 \n 
-# Put here any custom parameters that are specific to \n 
+# Put here any custom parameters that are specific to  
 # this job e.g., SMD, TclForces, etc... \n 
-\n 
-tclBC on;\n 
+
+tclBC on; 
 \n 
 tclBCScript { \n 
-    \n 
+     
     ############## INPUT VALUES ################### \n 
-    \n 
+     
     # mass limits; all carbons \n 
-    set lowMass [expr {[lindex $list2 11] - 0.3} ];\n 
-    set highMass [expr {[lindex $list2 11] + 0.3} ];\n 
-    \n 
+    set lowMass [expr {[lindex $list2 11] - 0.3} ]; 
+    set highMass [expr {[lindex $list2 11] + 0.3} ]; 
+     
     # sphere centered at (0,0,0) \n 
-    set radSquare [lindex $list2 12] \n 
+    set radSquare [lindex $list2 12]  
 \n 
     # cte force ( 0.0144 namdU = 1pN ) \n 
-    set cteForce [lindex $list2 13] \n
-    \n 
+    set cteForce [lindex $list2 13] 
+     
     # how often clean drops \n 
-    set stride [lindex $list2 14]; \n  
-    \n 
+    set stride [lindex $list2 14];  
     ############## MAIN PART ################### \n
-    \n 
+     
     wrapmode cell;
-    \n "
-
-
-#puts "all okokok"
-
+    "
 
 puts $fileid " 
     proc calcforces { step unique } { \n 
-	\n 
-	global lowMass highMass radSquare cteForce stride; \n 
-	\n 
+	 
+	global lowMass highMass radSquare cteForce stride;  
+	 
         # clear selection every STRIDE steps \n 
-        if { \$step % \$stride == 0 } { cleardrops } \n 
+        if { \$step % \$stride == 0 } { cleardrops }  
         \n 
         # pick atoms of a given patch one by one \n 
-        while {\[nextatom\]} { \n 
+        while {\[nextatom\]} {  
 	    \n 
-	    #>>>>>>>>>>>>>>>>> \n 
-            # FOR DEBUG \n 
-            # set atomID       \[ getid \]; \n 
-            #>>>>>>>>>>>>>>>>> \n 
+	    #>>>>>>>>>>>>>>>>>  
+            # FOR DEBUG  
+            # set atomID       \[ getid \];  
+            #>>>>>>>>>>>>>>>>>  
 	    \n 
-            # general info                \n 
-            set atomMass     \[ getmass \]; \n 
-\n 
-            # condition for mass \n 
-            set forceAtom 0;	 \n 
-            if { \$atomMass >= \$lowMass && \$atomMass <= \$highMass } { \n 
-                set forceAtom 1; \n 
-            } else { \n
+            # general info                 
+            set atomMass     \[ getmass \];  
  
-            }        \n 
-	    \n 
+            # condition for mass  
+            set forceAtom 0;	  
+            if { \$atomMass >= \$lowMass && \$atomMass <= \$highMass } {  
+                set forceAtom 1;  
+            } else { 
+ 
+            }         
+	     
             # drop atoms outside mass condition \n 
-            if { \$forceAtom  == 0 } { \n 
-                dropatom; \n 
-                continue;   \n 
-            } else { \n 
+            if { \$forceAtom  == 0 } {  
+                dropatom;  
+                continue;    
+            } else {  
                 \n 
-		# heavy atoms in this section \n 
-		# ---------------------------- \n 
-		\n 
-		# get current coordinates \n
-		set rvec \[ getcoord \] ;# get the atom's coordinates \n 
-		foreach { Xcoor Ycoor Zcoor } \$rvec { break } ;# get components of the vector \n 
-		unset rvec; \n 
+		# heavy atoms in this section  
+		# ----------------------------  
+		 
+		# get current coordinates 
+		set rvec \[ getcoord \] ;# get the atom's coordinates  
+		foreach { Xcoor Ycoor Zcoor } \$rvec { break } ;# get components of the vector  
+		unset rvec;  
 \n "
-
-#puts "ok1"
 
 puts $fileid " 
-		####################### \n 
+		#######################  
+ 
+		# get square of radial distance 
+		set rdist2   \[ expr ( \$Xcoor*\$Xcoor ) + ( \$Ycoor*\$Ycoor ) + ( \$Zcoor*\$Zcoor ) \];  
 \n 
-		# get square of radial distance		\n 
-		set rdist2   \[ expr ( \$Xcoor*\$Xcoor ) + ( \$Ycoor*\$Ycoor ) + ( \$Zcoor*\$Zcoor ) \]; \n 
-\n 
-		if { \$rdist2 < \$radSquare } { \n 
-		    set condVol 1; \n 
-		} else { \n 
-		    set condVol 0; \n 
-		} \n
-\n "
+		if { \$rdist2 < \$radSquare } { 
+		    set condVol 1; 
+		} else { 
+		    set condVol 0;  
+		} 
+"
 
 
 #puts "ok1.1"
 puts $fileid " 
-		\n 
+		 
                 # apply force\n 
                 if { \$condVol == 1 } {\n 
-\n 
-		    set rdist    \[ expr sqrt(\$rdist2) \];\n 
+		    set rdist    \[ expr sqrt(\$rdist2) \]; 
 		    \n 
-		    set uVecX \[ expr \$Xcoor/\$rdist \];\n 
-		    set uVecY \[ expr \$Ycoor/\$rdist \];\n 
-		    set uVecZ \[ expr \$Zcoor/\$rdist \];\n 
-		    \n 
+		    set uVecX \[ expr \$Xcoor/\$rdist \]; 
+		    set uVecY \[ expr \$Ycoor/\$rdist \]; 
+		    set uVecZ \[ expr \$Zcoor/\$rdist \]; 
+		     
 		    # negative sign for inward force\n 
-		    set forceX \[ expr -1.0*\$uVecX*\$cteForce \];\n 
-		    set forceY \[ expr -1.0*\$uVecY*\$cteForce \];\n 
-		    set forceZ \[ expr -1.0*\$uVecZ*\$cteForce \];\n 
-		    \n "
+		    set forceX \[ expr -1.0*\$uVecX*\$cteForce \]; 
+		    set forceY \[ expr -1.0*\$uVecY*\$cteForce \]; 
+		    set forceZ \[ expr -1.0*\$uVecZ*\$cteForce \]; 
+		   "
 
-#puts "ok1.2"
+
 
 puts $fileid "
  
-		    set totalForce \"\$forceX \$forceY \$forceZ\" \n		    \n 
-		    addforce \$totalForce;\n 
-		    \n 
-	
+		    set totalForce \"\$forceX \$forceY \$forceZ\" \n 
+		    addforce \$totalForce; 
+		    "
 
 
 
-		    \n "
-
-
-#puts "ok2"
 
 puts $fileid "
 		    unset rdist;
@@ -329,108 +372,19 @@ run \$stepP  ;"
 }
 close $fileid
 }
-
-
-
-## Create proc to call args.
-
-proc RecieveInput {args} {
-# If things don't work maybe the list is in the first element of args
-  set args [lindex $args 0]
-
-  # Set the defaults
-  set inputlist ""
-  set atommass 12
-  set cteForce 0.0144
-  set stride 100
-  set radSquare 6400.0
-  # Parse options
-  for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
-    set arg [lindex $args $argnum]
-    set val [lindex $args [expr $argnum + 1]]
-    switch -- $arg {
-      "-pdb"      { set pdbFile     $val; incr argnum; }
-      "-psf"      { set psfFile     $val; incr argnum; }
-      "-par"      { set parFile     $val; incr argnum; }
-      "-outName"  { set outName     $val; incr argnum; }
-      "-inName"   { set inName      $val; incr argnum; }
-      "-temp"     { set temp        $val; incr argnum; }
-      "-restartName" { set restartName  $val; incr argnum}
-      "-rfreq"    { set rFreq       $val; incr argnum; }
-      "-outfreq"  { set outFreq     $val; incr argnum; }
-      "-minsteps" { set minSteps    $val; incr argnum; }
-      "-runSteps" { set runSteps    $val; incr argnum; }
-      "-atommass" { set atommass    $val; incr argnum; }
-      "-cteForce" { set cteForce    $val; incr argnum; }
-      "-stride"   { set stride      $val; incr argnum; }
-      default     { error "error: aggregate: unknown option: $arg"}
-    }
-#    lappend inputlist $val
-  }
-  set inputlist [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride]
-  # Check non-default variables
-  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"] 
-  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
-    set z [lindex $vars $count_var]
-    set x [info exists $z]
-    set y "-$z"
-    if {$x < 1} {
-      error "error: aggregate: need to define variable $y"
-    }
-  }
-  return $inputlist
 }
 
+##############################################
+#          THE Main Script                   #
+##############################################
+
+# The only things that the user should put
+
+# source namdConfiguration_2.tcl
+# namdCreateCont -pdb file -psf file -outName file -temp 100 -runSteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -numConfFiles 100 -restartName filere
+# exit
 
 
-#set list1 {structure
-#  coordinates
-#  outputname
-#  temperature
-#  runSteps
-#  restartfoo
-#  inputname
-#  inName
-#  parFile
-#  restartFrequency
-#  outputFrequency
-#  minSteps}
-#set c
-#foreach name $list1 {
-#puts -nonewline "Insert $name : "
-#flush stdout
-#gets stdin var
-#lappend list2 $var
-#}
 
-##########################################################
-#   This is for preliminary usage                        #
-##########################################################
-puts -nonewline "Please insert the values: "
-flush stdout
-gets stdin defl1
-#set defl [split [lindex $defl1 0]]
-### In case you wnt default values
-#set defl "-pdb file -psf file -par lala.file -outName file -inName file_other -temp 100 -restartName restart -rfreq 10 -outfreq 10 -minsteps 100 -runSteps 100"
-###########################################################
-###########################################################
-#                  MAIN SCRIPT                            #
-###########################################################
-
-set IL [RecieveInput $defl1]
-
-set iname [lindex $IL 3]
-
-#set count 0
-
-for {set i 0} {$i < 9} {incr i} {
-
-set outVal [ format "%03d" $i ];
-set name $iname
-append name $outVal
-set IL [lreplace $IL 3 3 $name]
-CreateFC $IL
-
-}
 
 

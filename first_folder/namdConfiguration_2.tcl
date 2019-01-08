@@ -2,21 +2,22 @@
 ## Script to create a namd configuration file for minimization
 ##
 
-proc namdConfig {args} {
+proc namdCreateConfig {args} {
 
 # If things don't work maybe the list is in the first element of args
 #  set args [lindex $args 0]
   # Set the defaults
-  set inputlist ""
-  #set pdbFile 0
-  set prevConf "PEEK.6H07"
-  set outNmae "PEEK.5H"
-  set inName "PEEK.5H"
-  # Parse options
-  for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
-    set arg [lindex $args $argnum]
-    set val [lindex $args [expr $argnum + 1]]
-    switch -- $arg {
+set inputlist ""
+#set pdbFile 0
+set prevConf "PEEK.6H07"
+set outNmae "PEEK.5H"
+set inName "PEEK.5H"
+set numConfFiles 50
+# Parse options
+for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
+   set arg [lindex $args $argnum]
+   set val [lindex $args [expr $argnum + 1]]
+   switch -- $arg {
       "-pdb"      { set pdbFile     $val; incr argnum; }
       "-psf"      { set psfFile     $val; incr argnum; }
       "-outName"  { set outName     $val; incr argnum; }
@@ -31,21 +32,23 @@ proc namdConfig {args} {
       "-prevConf" { set prevConf    $val; incr argnum; }
       "-numConfFiles" { set numConfFiles  $val; incr argnum; }
       default     { error "error: aggregate: unknown option: $arg"}
-    }
+   }
 #    lappend inputlist $val
-  }
-  set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles]
-  # Check non-default variables
-  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
+}
+#  set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles]
+# Check non-default variables
+set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
 
-  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
-    set z [lindex $vars $count_var]
-    set x [info exists $z]
-    set y "-$z"
-    if {$x < 1} {
-      error "error: aggregate: need to define variable $y"
-    }
-  }
+for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
+   set z [lindex $vars $count_var]
+   set x [info exists $z]
+   set y "-$z"
+
+   if {$x < 1} {
+     error "error: aggregate: need to define variable $y"
+   }
+}
+set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles]
 #  return $inputlist
 
 
@@ -78,18 +81,7 @@ set runSteps       [lindex $list2 4];
 
 
 
-set inputname   [lindex $list2 5];
-
-
-proc get_first_ts { xscfile } {\n\n
-     set fd \[open \$xscfile r\]
-     gets \$fd
-     gets \$fd
-     gets \$fd line
-     set ts \[lindex \$line 0\]
-     close \$fd
-     return \$ts\n
-}\n "
+set inputname   [lindex $list2 5]; "
 
 if { $i == 0 } {
 puts $fileid "
@@ -101,11 +93,22 @@ puts $fileid "
 
 } else {
 puts $fileid "
+
+proc get_first_ts { xscfile } {\n\n
+     set fd \[open \$xscfile r\]
+     gets \$fd
+     gets \$fd
+     gets \$fd line
+     set ts \[lindex \$line 0\]
+     close \$fd
+     return \$ts\n
+}\n
+
     bincoordinates     ./\$inputname.CONT.restart.coor
     binvelocities      ./\$inputname.CONT.restart.vel
     extendedSystem     ./\$inputname.CONT.restart.xsc\n
 
-    set firsttime \[get_first_ts ./\$inputname.restart.xsc\]
+    set firsttime \[get_first_ts ./\$inputname.CONT.restart.xsc\]
     firsttimestep \$firsttime \n "
 
 }
@@ -163,7 +166,7 @@ outputPressure      [lindex $list2 8];"
 puts $fileid "#############################################################\n## EXTRA PARAMETERS                                        ##\n#############################################################\n## Put here any custom parameters that are specific to\n# this job (e.g., SMD, TclForces, etc...)\n\n#############################################################\n## EXECUTION SCRIPT                                        ##\n#############################################################\n"
 puts $fileid "# Minimization\n
 minimize            [lindex $list2 9];
-reinitvels          \$temperature; \n"
+reinitvels          \$temperature;"
 
 if { $i ==  0 } {
 puts $fileid "run \$runSteps; \n"
@@ -185,27 +188,6 @@ close $fileid
 # The only things that the user should put
 
 # source namdConfiguration_2.tcl
-# namdConfig -pdb file -psf file -outName file -temp 100 -runSteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -prevConf PEEK.6H07 -numConfFiles 100
+# namdCreateConfig -pdb file -psf file -outName file -temp 100 -runSteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -prevConf PEEK.6H07 -numConfFiles 100
 # exit
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
