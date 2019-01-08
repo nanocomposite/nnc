@@ -4,18 +4,6 @@
 
 proc namdCreateConfig {list2} {
 
-# If things don't work maybe the list is in the first element of args
-#  set args [lindex $args 0]
-  # Set the defaults
-set inputlist ""
-#set pdbFile 0
-set prevConf "PEEK.6H07"
-set outNmae "PEEK.5H"
-set inName "PEEK.5H"
-set numConfFiles 50
-
-####
-
 set iname [lindex $list2 2]
 
 for {set i 0} {$i < [lindex $list2 11]} {incr i} {
@@ -162,54 +150,7 @@ close $fileid
 ## 
 ##
 #########################################
-proc namdCreateCont {args} {
-
-# If things don't work maybe the list is in the first element of args
-#  set args [lindex $args 0]
-
-  # Set the defaults
-  set inputlist ""
-  set atommass 12
-  set cteForce 0.0144
-  set stride 100
-  set radSquare 6400.0
-  # Parse options
-  for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
-    set arg [lindex $args $argnum]
-    set val [lindex $args [expr $argnum + 1]]
-    switch -- $arg {
-      "-pdb"      { set pdbFile     $val; incr argnum; }
-      "-psf"      { set psfFile     $val; incr argnum; }
-      "-par"      { set parFile     $val; incr argnum; }
-      "-outName"  { set outName     $val; incr argnum; }
-      "-inName"   { set inName      $val; incr argnum; }
-      "-temp"     { set temp        $val; incr argnum; }
-      "-restartName" { set restartName  $val; incr argnum}
-      "-rfreq"    { set rFreq       $val; incr argnum; }
-      "-outfreq"  { set outFreq     $val; incr argnum; }
-      "-minsteps" { set minSteps    $val; incr argnum; }
-      "-runSteps" { set runSteps    $val; incr argnum; }
-      "-atommass" { set atommass    $val; incr argnum; }
-      "-cteForce" { set cteForce    $val; incr argnum; }
-      "-stride"   { set stride      $val; incr argnum; }
-      "-numConfFiles" {set numConfFiles  $val; incr argnum; }
-      default     { error "error: aggregate: unknown option: $arg"}
-    }
-#    lappend inputlist $val
-  }
-#  set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]
-  # Check non-default variables
-  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
-  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
-    set z [lindex $vars $count_var]
-    set x [info exists $z]
-    set y "-$z"
-    if {$x < 1} {
-      error "error: aggregate: need to define variable $y"
-    }
-  }
-set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]
-
+proc namdCreateCont {list2} {
 
 set iname [lindex $list2 3]
 
@@ -552,57 +493,7 @@ close $fileid
 ## Here I do have to put inNames, because we use the files from the Force Collapse simulations and we have to create other restart files
 ##
 #########################################
-proc namdCreateEX {args} {
-
-# if things don't work maybe the list is in the first element of args
-#  set args [lindex $args 0]
-  # Set the defaults
-  set inputlist ""
-  set atommass 12
-  set dWall 107
-  set dFdR 0.00034
-  set stride 100
-  set radSquare 6400.0
-  set numConfFiles 50
-  # Parse options
-  for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
-    set arg [lindex $args $argnum]
-    set val [lindex $args [expr $argnum + 1]]
-    switch -- $arg {
-      "-pdb"      { set pdbFile     $val; incr argnum; }
-      "-psf"      { set psfFile     $val; incr argnum; }
-      "-par"      { set parFile     $val; incr argnum; }
-      "-outName"  { set outName     $val; incr argnum; }
-      "-inName"   { set inName      $val; incr argnum; }
-      "-temp"     { set temp        $val; incr argnum; }
-      "-restartName" { set restartName  $val; incr argnum}
-      "-rfreq"    { set rFreq       $val; incr argnum; }
-      "-outfreq"  { set outFreq     $val; incr argnum; }
-      "-minsteps" { set minSteps    $val; incr argnum; }
-      "-runSteps" { set runSteps    $val; incr argnum; }
-      "-atommass" { set atommass    $val; incr argnum; }
-      "-dWall"    { set dWall       $val; incr argnum; }
-      "-dFdR"     { set dFdR        $val; incr argnum; }
-      "-stride"   { set stride      $val; incr argnum; }
-      "-numConfFiles" { set numConfFiles      $val; incr argnum; }
-      default     { error "error: aggregate: unknown option: $arg"}
-    }
-#    lappend inputlist $val
-  }
-
-  # Check non-default variables
-  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
-  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
-    set z [lindex $vars $count_var]
-    set x [info exists $z]
-    set y "-$z"
-    if {$x < 1} {
-      error "error: aggregate: need to define variable $y"
-    }
-  }
-set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $dFdR $stride $numConfFiles]
- 
-
+proc namdCreateEX {list2} {
 
 set iname [lindex $list2 3]
 
@@ -903,56 +794,7 @@ close $fileid
 ##
 ## The most important variables go in list2, that is why we check if these were added
 ################################
-proc CreateFC {args} {
-
-  # If things don't work maybe the list is in the first element of args
-#  set args [lindex $args 0]
-  # Set the defaults
-  set inputlist ""
-  set atommass 12
-  set dWall 70
-  set cteForce 0.072
-  set stride 100
-  set restartName "FC"
-  set numConfFiles 50
-  # Parse options
-  for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
-    set arg [lindex $args $argnum]
-    set val [lindex $args [expr $argnum + 1]]
-    switch -- $arg {
-      "-pdb"      { set pdbFile     $val; incr argnum; }
-      "-psf"      { set psfFile     $val; incr argnum; }
-      "-par"      { set parFile     $val; incr argnum; }
-      "-outName"  { set outName     $val; incr argnum; }
-      "-restartName" {set restartName     $val; incr argnum; }
-      "-temp"     { set temp        $val; incr argnum; }
-      "-rfreq"    { set rFreq       $val; incr argnum; }
-      "-outfreq"  { set outFreq     $val; incr argnum; }
-      "-minsteps" { set minSteps    $val; incr argnum; }
-      "-runSteps" { set runSteps    $val; incr argnum; }
-      "-atommass" { set atommass    $val; incr argnum; }
-      "-cteForce" { set cteForce    $val; incr argnum; }
-      "-stride"   { set stride      $val; incr argnum; }
-      "-numConfFiles" { set numConfFiles      $val; incr argnum; }
-      default     { error "error: aggregate: unknown option: $arg"}
-    }
-#    lappend inputlist $val
-  }
-#set list2 [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]
-# Check non-default variables
-  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "parFile" "rFreq" "outFreq" "minSteps"]
-
-  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
-    set z [lindex $vars $count_var]
-    set x [info exists $z]
-    set y "-$z"
-    if {$x < 1} {
-      error "error: aggregate: need to define variable $y"
-    }
-  }
-set list2 [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]
-
-
+proc CreateFC {list2} {
 
 set iname [lindex $list2 3]
 
@@ -1236,61 +1078,7 @@ close $fileid
 ## Here I do have to put inNames, because we use the files from the Force Collapse simulations and we have to create other restart files
 ##
 #########################################
-proc CreateGrid {args} {
-
-# If things don't work maybe the list is in the first element of args
-#  set args [lindex $args 0]
-  # Set the defaults
-  set inputlist ""
-  set atommass 12
-  set dFdR 0.00034
-  set stride 100
-  set radSquare 6400.0
-  set gridforcefile "./files/PEEK.7H034.gforce"
-  set gridforcepotfile "./files/PEEK10nmCNT.K0.Free.dx"
-  set numConfFiles 50
-  # Parse options
-  for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
-    set arg [lindex $args $argnum]
-    set val [lindex $args [expr $argnum + 1]]
-    switch -- $arg {
-      "-pdb"      { set pdbFile     $val; incr argnum; }
-      "-psf"      { set psfFile     $val; incr argnum; }
-      "-par"      { set parFile     $val; incr argnum; }
-      "-outName"  { set outName     $val; incr argnum; }
-      "-inName"   { set inName      $val; incr argnum; }
-      "-temp"     { set temp        $val; incr argnum; }
-      "-restartName" { set restartName  $val; incr argnum}
-      "-rfreq"    { set rFreq       $val; incr argnum; }
-      "-outfreq"  { set outFreq     $val; incr argnum; }
-      "-minsteps" { set minSteps    $val; incr argnum; }
-      "-runSteps" { set runSteps    $val; incr argnum; }
-      "-atommass" { set atommass    $val; incr argnum; }
-      "-dFdR" { set dFdR    $val; incr argnum; }
-      "-stride"   { set stride      $val; incr argnum; }
-      "-gridforcefile" { set gridforcefile     $val; incr argnum; }
-      "-gridforcepotfile"   { set gridforcepotfile     $val; incr argnum; }
-      "-numConfFiles"      { set numConfFiles     $val; incr argnum; }
-      default     { error "error: aggregate: unknown option: $arg"}
-    }
-#    lappend inputlist $val
-  }
-#  set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $gridforcefile $gridforcepotfile $numConfFiles]
-  # Check non-default variables
-  set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
-  for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
-    set z [lindex $vars $count_var]
-    set x [info exists $z]
-    set y "-$z"
-    if {$x < 1} {
-      error "error: aggregate: need to define variable $y"
-    }
-  }
-
-set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $gridforcefile $gridforcepotfile $numConfFiles]
-
-
-
+proc CreateGrid {list2} {
 
 set iname [lindex $list2 3]
 
@@ -1486,14 +1274,14 @@ proc namdConfiguration {args} {
 
 # If things don't work maybe the list is in the first element of args
 #  set args [lindex $args 0]
-  # Set the defaults
+#### Set the defaults
 
-  
-###############
-# Maybe I should put all the defaults here
-############
-
-
+ set numConfFiles 50
+ set atommass 12
+ set stride 100
+ set radSquare 6400.0
+ set gridforcefile "./files/PEEK.7H034.gforce"
+ set gridforcepotfile "./files/PEEK10nmCNT.K0.Free.dx"
 
 
   # Parse options
@@ -1508,7 +1296,7 @@ proc namdConfiguration {args} {
       "-outName"  { set outName     $val; incr argnum; }
       "-inName"   { set inName      $val; incr argnum; }
       "-temp"     { set temp        $val; incr argnum; }
-      "-restartName" { set restartName  $val; incr argnum}
+      "-restartName" { set restartName  $val; incr argnum; }
       "-rfreq"    { set rFreq       $val; incr argnum; }
       "-outfreq"  { set outFreq     $val; incr argnum; }
       "-minsteps" { set minSteps    $val; incr argnum; }
@@ -1538,41 +1326,22 @@ proc namdConfiguration {args} {
     }
   }
 
-set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles ] 
+#set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles ] 
 
 
 
-#   "Configuration"    { source ./namdConfiguration_2.tcl; }
 
 
+# Here you can put specific variables for every type of file, we use this part to create the files according to the -type option
   switch -- $type {
 
-   "Configuration"    { namdCreateConfig $list2; }
-   "Contract"         { namdCreateCont   $list2; } 
-   "Expand"           { namdCreateEX     $list2; }
-   "ForceCollapse"    { CreateFC         $list2; }
-   "Grid"             { CreateGrid       $list2; }
+   "Configuration"    { set prevConf "PEEK.6H07"; set outNmae "PEEK.5H"; set inName "PEEK.5H" ; set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles ]; namdCreateConfig $list2; }
+   "Contract"         { set cteForce 0.0144; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]; namdCreateCont   $list2; } 
+   "Expand"           { set dWall 107; set dFdR 0.00034; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $dFdR $stride $numConfFiles]; namdCreateEX     $list2; }
+   "ForceCollapse"    { set dWall 70; set cteForce 0.072; set restartName "FC"; set list2 [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
+   "Grid"             { set dFdR 0.00034; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $gridforcefile $gridforcepotfile $numConfFiles]; CreateGrid       $list2; }
    default     { error "error: incorrect argument: -type"}
   }
 
-
-
-
-
-
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
 
