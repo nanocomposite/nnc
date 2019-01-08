@@ -2,7 +2,7 @@
 ## Script to create a namd configuration file for minimization
 ##
 
-proc namdCreateConfig {args} {
+#proc namdCreateConfig {list2} {
 
 # If things don't work maybe the list is in the first element of args
 #  set args [lindex $args 0]
@@ -14,46 +14,14 @@ set outNmae "PEEK.5H"
 set inName "PEEK.5H"
 set numConfFiles 50
 # Parse options
-for {set argnum 0} {$argnum < [llength $args]} {incr argnum} {
-   set arg [lindex $args $argnum]
-   set val [lindex $args [expr $argnum + 1]]
-   switch -- $arg {
-      "-pdb"      { set pdbFile     $val; incr argnum; }
-      "-psf"      { set psfFile     $val; incr argnum; }
-      "-outName"  { set outName     $val; incr argnum; }
-      "-temp"     { set temp        $val; incr argnum; }
-      "-runSteps" { set runSteps    $val; incr argnum; }
-      "-inName"   { set inName      $val; incr argnum; }
-      "-par"      { set parFile     $val; incr argnum; }
-      "-rfreq"    { set rFreq       $val; incr argnum; }
-      "-outfreq"  { set outFreq     $val; incr argnum; }
-      "-minsteps" { set minSteps    $val; incr argnum; }
-      "-prevConf" { set prevConf    $val; incr argnum; }
-      "-numConfFiles" { set numConfFiles  $val; incr argnum; }
-      default     { error "error: aggregate: unknown option: $arg"}
-   }
-#    lappend inputlist $val
-}
-#  set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles]
-# Check non-default variables
-set vars [list "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
-
-for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
-   set z [lindex $vars $count_var]
-   set x [info exists $z]
-   set y "-$z"
-
-   if {$x < 1} {
-     error "error: aggregate: need to define variable $y"
-   }
-}
-set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles]
-#  return $inputlist
-
+##################################################################################
 
 set iname [lindex $list2 2]
 
 for {set i 0} {$i < [lindex $list2 11]} {incr i} {
+
+puts "The loop $i is working"
+
 
 set outVal [ format "%03d" $i ];
 set name $iname
@@ -177,8 +145,9 @@ run \$stepP ; \n"
 
 close $fileid
 }
-}
+#}
 
+puts "I am inside the script"
 
 ##############################################
 #          THE Main Script                   #
