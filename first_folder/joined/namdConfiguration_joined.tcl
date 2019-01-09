@@ -1315,8 +1315,8 @@ proc namdConfiguration {args} {
 #    lappend inputlist $val
   }
 #  set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $gridforcefile $gridforcepotfile $numConfFiles]
-  # Check non-default variables
-  set vars [list "type" "pdbFile" "psfFile" "outName" "temp" "runSteps" "inName" "parFile" "rFreq" "outFreq" "minSteps"]
+  # Check non-default variables, force collapsse is the only one that does not need inName
+  set vars [list "type" "pdbFile" "psfFile" "outName" "temp" "runSteps" "parFile" "rFreq" "outFreq" "minSteps"]
   for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
     set z [lindex $vars $count_var]
     set x [info exists $z]
@@ -1327,21 +1327,47 @@ proc namdConfiguration {args} {
   }
 
 #set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles ] 
-
-
-
-
-
+###############################################################################################################################
 # Here you can put specific variables for every type of file, we use this part to create the files according to the -type option
-  switch -- $type {
+  switch -exact -- [string tolower $type] {
 
-   "Configuration"    { set prevConf "PEEK.6H07"; set outNmae "PEEK.5H"; set inName "PEEK.5H" ; set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles ]; namdCreateConfig $list2; }
-   "Contract"         { set cteForce 0.0144; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]; namdCreateCont   $list2; } 
-   "Expand"           { set dWall 107; set dFdR 0.00034; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $dFdR $stride $numConfFiles]; namdCreateEX     $list2; }
-   "ForceCollapse"    { set dWall 70; set cteForce 0.072; set restartName "FC"; set list2 [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
-   "Grid"             { set dFdR 0.00034; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $gridforcefile $gridforcepotfile $numConfFiles]; CreateGrid       $list2; }
+   "configuration"    { set prevConf "PEEK.6H07"; set outNmae "PEEK.5H"; set inName "PEEK.5H" ; set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles ]; namdCreateConfig $list2; }
+   "contract"         { set cteForce 0.0144; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]; namdCreateCont   $list2; } 
+   "expand"           { set dWall 107; set dFdR 0.00034; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $dFdR $stride $numConfFiles]; namdCreateEX     $list2; }
+   "forcecollapse"    { set dWall 70; set cteForce 0.072; set restartName "FC"; set list2 [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
+   "grid"             { set dFdR 0.00034; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $gridforcefile $gridforcepotfile $numConfFiles]; CreateGrid       $list2; }
    default     { error "error: incorrect argument: -type"}
   }
 
 }
+
+##########################################################################
+#                   Some preliminary options                             #
+##########################################################################
+
+# CONFIGURATION 
+# namdConfiguration -type configuration -pdb file -psf file -outName file -temp 100 -runSteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -prevConf PEEK.6H07 -numConfFiles 100
+
+# CONTRACT
+# namdConfiguration -type contract -pdb file -psf file -outName file -temp 100 -runSteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -numConfFiles 100 -restartName filere
+
+# EXPAND
+# namdConfiguration -type expand -pdb file -psf file -outName file -temp 100 -runSteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -restartName fileres -numConfFiles 100
+
+# FORCECOLLAPSE
+# namdConfiguration -type forcecollapse -pdb file -psf file -outName file -temp 100 -runSteps 100 -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -restartName fileres -numConfFiles 100
+
+# GRID
+# namdConfiguration -type grid -pdb file -psf file -par lala.par -outName file -inName file -temp 100 -restartName restart -rfreq 100 -outfreq 100 -minsteps 10 -runSteps 100
+
+
+
+
+
+
+
+
+
+
+
 
