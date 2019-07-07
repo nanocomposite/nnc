@@ -14,10 +14,10 @@ proc nnc { args } {
 	     geoCollapse [options...]
 
             Create exclusion region:
-             phantomBody [options...]
+             phantomVolume [options...]
 
             Create NAMD configuration file:
-             namdConf [options...]	    
+             namdConfiguration [options...]	    
 	}
 
 	return

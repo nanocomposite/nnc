@@ -69,7 +69,7 @@ proc nncrandomGrid  { args } {
 	    "-kGrid"      { set kGrid      $val; incr argnum; }
 	    "-seed"       { set seed       $val; incr argnum; }
 	    "-outName"    { set outName    $val; incr argnum; }
-	    default { error "error: makeGrid: unknown option: $arg" }
+	    default { error "error: randomGrid: unknown option: $arg" }
 	}
     }
 
@@ -81,15 +81,15 @@ proc nncrandomGrid  { args } {
     set checkOUTNAME [ info exists outName ];
         
     if { $checkPSF < 1 } {
-	error "error: makeGrid: need to define variable -psf"
+	error "error: randomGrid: need to define variable -psf"
     }
     
     if { $checkPDB < 1 } {
-	error "error: makeGrid: need to define variable -coor"
+	error "error: randomGrid: need to define variable -coor"
     }
     
     if { $checkOUTNAME < 1 } {
-	error "error: makeGrid: need to define variable -outName"
+	error "error: randomGrid: need to define variable -outName"
     }
     
 

@@ -29,7 +29,7 @@ proc nncgeoCollapse { args } {
 	    "-vortixPoint" { set vortixPoint   $val; incr argnum; }
 	    "-trj"         { set trj              0; incr argnum; }
 	    "-outName"     { set outName       $val; incr argnum; }
-	    default { error "error: aggregate: unknown option: $arg" }
+	    default { error "error: geoCollapse: unknown option: $arg" }
 	}
     }
 
@@ -41,16 +41,16 @@ proc nncgeoCollapse { args } {
     set checkOUTNAME     [ info exists outName ];
     
     if { $checkPSF < 1 } {
-	error "error: aggregate: need to define variable -psf"
+	error "error: geoCollapse: need to define variable -psf"
     }    
     if { $checkPDB < 1 } {
-	error "error: aggregate: need to define variable -coor"
+	error "error: geoCollapse: need to define variable -coor"
     }
     if { $checkRP < 1 } {
-	error "error: aggregate: need to define variable -rp"
+	error "error: geoCollapse: need to define variable -rp"
     }    
     if { $checkOUTNAME < 1 } {
-	error "error: aggregate: need to define variable -outName"
+	error "error: geoCollapse: need to define variable -outName"
     }
     
 

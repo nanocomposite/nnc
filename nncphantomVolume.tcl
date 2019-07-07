@@ -25,7 +25,7 @@ proc nncphantomVolume { args } {
 	set val [ lindex $args [expr $argnum + 1]]
 	switch -- $arg {
 	    "-psf"     { set psfFile  $val; incr argnum; }
-	    "-pdb"     { set pdbFile  $val; incr argnum; }
+	    "-coor"    { set pdbFile  $val; incr argnum; }
 	    "-within"  { set shellXYZ $val; incr argnum; }
 	    "-dxRes"   { set dxGrid   $val; incr argnum; }
 	    "-outName" { set outName  $val; incr argnum; }
