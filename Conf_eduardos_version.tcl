@@ -1,15 +1,24 @@
-
-
-##
+###########################################################
+#
+#
+#
+#
+# 
+#
+#
+#
 
 package provide nanocomposite 0.1
 
 namespace eval ::NanoComposite:: {
     namespace export nnc*
 
-puts "Hey, I am working"
-proc nncnamdConfiguration {args} {
-#puts "HEY, I AM WORKING"
+proc nncnamdConfiguration { args } {
+
+
+    #!/usr/bin/tclsh
+## Script to create a namd configuration file for minimization
+##
 
 proc namdCreateConfig {list2} {
 
@@ -1279,7 +1288,7 @@ close $fileid
 
 
 
-#proc namdConfiguration {args} {
+proc namdConfiguration {args} {
 
 # If things don't work maybe the list is in the first element of args
 #  set args [lindex $args 0]
@@ -1380,12 +1389,6 @@ if { [llength $args] < 3 } {
 
 }
 
-
-
-
-# Close namespace
-}
-
 ##########################################################################
 #                   Some preliminary options                             #
 ##########################################################################
@@ -1404,4 +1407,20 @@ if { [llength $args] < 3 } {
 
 # GRID
 # namdConfiguration -type grid -pdb file -psf file -par lala.par -outName file -inName file -temp 100 -restartName restart -rfreq 100 -outfreq 100 -minsteps 10 -runsteps 100
+
+
+####
+
+}
+
+}
+
+
+
+
+
+
+
+
+
 
