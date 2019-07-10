@@ -38,7 +38,7 @@ set outFreq        100;
 
  
 set minSteps       10; 
-set mdSteps        1001; 
+set mdSteps        100; 
 
  
 
