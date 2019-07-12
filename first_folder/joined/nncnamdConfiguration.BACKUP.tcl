@@ -51,20 +51,21 @@ coordinates        [lindex $list2 1];
 set outputname     [lindex $list2 2];
 set temperature    [lindex $list2 3];
 set runSteps       [lindex $list2 4];
-\n"
+
+
+set inputname   [lindex $list2 5];\n"
 
 if { $i == 0 } {
 puts $fileid "
-bincoordinates     ./[lindex $list2 10].coor
-binvelocities      ./[lindex $list2 10].vel
-extendedSystem     ./[lindex $list2 10].xsc\n
+    bincoordinates     ./[lindex $list2 10].coor
+    binvelocities      ./[lindex $list2 10].vel
+    extendedSystem     ./[lindex $list2 10].xsc\n
 
-firsttimestep 0\n"
+    firsttimestep 0\n"
 
 } else {
 puts $fileid "
 
-set inputname   [lindex $list2 5];\n"
 proc get_first_ts { xscfile } {\n\n
      set fd \[open \$xscfile r\]
      gets \$fd
@@ -75,9 +76,9 @@ proc get_first_ts { xscfile } {\n\n
      return \$ts\n
 }\n
 
-    bincoordinates     ./\$inputname.restart.coor
-    binvelocities      ./\$inputname.restart.vel
-    extendedSystem     ./\$inputname.restart.xsc\n
+    bincoordinates     ./\$inputname.CONT.restart.coor
+    binvelocities      ./\$inputname.CONT.restart.vel
+    extendedSystem     ./\$inputname.CONT.restart.xsc\n
 
     set firsttime \[get_first_ts ./\$inputname.CONT.restart.xsc\]
     firsttimestep \$firsttime \n "
