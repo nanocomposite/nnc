@@ -40,7 +40,6 @@ append namein "."
 append namein $inval
 set list2 [lreplace $list2 5 5 $namein]
 }
-#CreateNamdConf $list2
 
 #set outname [lindex $list2 2]
 set fileid [open $name.namd w]
@@ -64,7 +63,7 @@ firsttimestep 0\n"
 } else {
 puts $fileid "
 
-set inputname   [lindex $list2 5];\n"
+set inputname   [lindex $list2 5];\n
 proc get_first_ts { xscfile } {\n\n
      set fd \[open \$xscfile r\]
      gets \$fd
@@ -89,14 +88,15 @@ puts $fileid "paraTypeCharmm      on \n
 parameters [lindex $list2 6];\n# Periodic Boundary conditions\nwrapWater           off\nwrapAll             off\n"
 
 puts $fileid "# Force-Field Parameters
+
 exclude             scaled1-4
 1-4scaling          1.0
-cutoff              16.0
+cutoff              12.0
 switching           on
-switchdist          15.0
-pairlistdist        17.5
-margin               3\n
-
+switchdist          10.0
+pairlistdist        14.0
+margin               3
+\n
 timestep            1.0
 nonbondedFreq       2
 fullElectFrequency  4
@@ -201,28 +201,15 @@ close $fileid
 }
 
 
-##############################################
-#          THE Main Script                   #
-##############################################
 
-# The only things that the user should put
+######################################
+##           Contraction            ##                                    
+######################################
 
-# source namdConfiguration_2.tcl
-# namdCreateConfig -pdb file -psf file -outName file -temp 100 -runSteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -prevConf PEEK.6H07 -numConfFiles 100
-# exit
-
-###############################################################################################################################################################
-## 
-## 
-##
-## 
-##
-#########################################
 proc namdCreateCont {list2} {
 
 set iname [lindex $list2 3]
 
-#set count 0
 
 for {set i 0} {$i < [lindex $list2 15]} {incr i} {
 
@@ -231,6 +218,15 @@ set name $iname
 append name "."
 append name $outVal
 set list2 [lreplace $list2 3 3 $name]
+
+if { $i >= 1 } {
+set inval [ format "%03d" [expr {$i -1}] ];
+
+set namein $iname
+append namein "."
+append namein $inval
+set list2 [lreplace $list2 6 6 $namein]
+}
 
 
 set fileid [open $name.namd w]
@@ -256,7 +252,6 @@ set previousXsc    [lindex $list2 4].xsc;
 }
 puts $fileid " 
 set outName        [lindex $list2 3]; 
-set restartName    [lindex $list2 6]; 
 \n 
 set temperature    [lindex $list2 5]; 
 \n 
@@ -294,6 +289,7 @@ firsttimestep 0;
 
 puts $fileid "
 
+set restartName    [lindex $list2 6]; 
 # Previous simulations\n 
 proc get_first_ts { xscfile } { 
     set fd \[open \$xscfile r\] 
@@ -310,7 +306,7 @@ binvelocities      ./\$restartName.restart.vel;
 extendedSystem     ./\$restartName.restart.xsc;
 \n
 set firsttime \[get_first_ts ./\$restartName.restart.xsc\] \n
-firsttimestep \$firsttime "
+firsttimestep \$firsttime\n"
 }
 
 puts $fileid "
@@ -482,10 +478,6 @@ puts $fileid "
 		    set totalForce \"\$forceX \$forceY \$forceZ\" \n 
 		    addforce \$totalForce; 
 		    "
-
-
-
-
 puts $fileid "
 		    unset rdist;
 		    unset uVecX;
@@ -1335,6 +1327,7 @@ proc nncnamdConfiguration {args} {
  set dFdR 0.00034
  set ensemble "NPT"
  set inName ""
+ set cteForce ""
 
 # To get to know the usage of namdConfiguration
  set x [info exists [lindex $args 0]]
@@ -1348,8 +1341,8 @@ proc nncnamdConfiguration {args} {
 if { [llength $args] < 3 } {
  switch -exact -- [string tolower [lindex $args 1]] {
 
-    "configuration"    { puts "Info) usage: namdConfiguration -type configuration \[options...\]\n      Available options:\n      -pdb; -psf; -outName; -temp; -runSteps; -inName;\n      -par; -rfreq; -outfreq; -minsteps; -prevConf; -numConfFiles"; return; }
-    "contract"         { puts "Info) usage: namdConfiguration -type contract \[options...\]\n      Available options:\n      -pdb; -psf; -par; -outName; -inName; -temp;\n      -restartName; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -radSquare; -cteForce; -stride; -numConfFiles"; return; }
+    "configuration"    { puts "Info) usage: namdConfiguration -type configuration \[options...\]\n      Available options:\n      -pdb; -psf; -outName; -temp; -runsteps; -inName;\n      -par; -rfreq; -outfreq; -minsteps; -prevConf; -numConfFiles; -ensemble"; return; }
+    "contract"         { puts "Info) usage: namdConfiguration -type contract \[options...\]\n      Available options:\n      -pdb; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -radSquare; -cteForce; -stride; -numConfFiles"; return; }
     "expand"           { puts "Info) usage: namdConfiguration -type expand \[options...\]\n     Available options:\n      -pdb; -psf; -par; -outName; -inName; -temp;\n      -restartName; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -dWall; -dFdR; -stride; -numConfFiles"; return; }
     "forcecollapse"    { puts "Info) usage: namdConfiguration -type forcecollapse \[options...\]\n      Available options:\n      -pdb; -psf; -par -outName; -restartName; -temp;\n      -rFreq; -outfreq; -minSteps; -runsteps; -atommass; -dWall;\n      -cteForce; -stride; -numConfFiles"; return; }
     "grid"             { puts "Info) usage: namdConfiguration -type grid \[options...\]\n      Available options:\n      -pdb; -psf; -par; -outName; -inName; -temp;\n      -restartName; -rfreq; -outfreq; -minsteps; -runsteps; -gridforcefile;\n      -gridforcepotfile; -numConfFiles"; return; }
@@ -1411,12 +1404,14 @@ if { [llength $args] < 3 } {
 
 ###############################################################################################################################
 # Here you can put specific variables for every type of file, we use this part to create the files according to the -type option
+  if { $inName == "" } {set inName $outName};
+
   switch -exact -- [string tolower $type] {
 
-   "configuration"    { if { $inName == "" } {set inName $outName}; set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $ensemble ]; namdCreateConfig $list2; }
-   "contract"         { set cteForce 0.0144; set inName "contract"; set restartName "contract" ; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]; namdCreateCont   $list2; } 
+   "configuration"    { set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $ensemble ]; namdCreateConfig $list2; }
+   "contract"         { if { $cteForce == "" } {set cteForce 0.0144}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]; namdCreateCont   $list2; } 
    "expand"           { set dWall 107; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $dFdR $stride $numConfFiles]; namdCreateEX     $list2; }
-   "forcecollapse"    { set dWall 70; set cteForce 0.072; set restartName "FC"; set list2 [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
+   "forcecollapse"    { set dWall 70; if { $cteForce == "" } {set cteForce 0.072}; set restartName "FC"; set list2 [list $pdbFile $psfFile $parFile $outName $restartName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
    "grid"             { set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $restartName $rFreq $outFreq $minSteps $runSteps $gridforcefile $gridforcepotfile $numConfFiles]; CreateGrid       $list2; }
    default     { error "error: incorrect argument: -type"}
   }
@@ -1432,13 +1427,13 @@ if { [llength $args] < 3 } {
 ##########################################################################
 
 # CONFIGURATION 
-# namdConfiguration -type configuration -pdb file -psf file -outName file -temp 100 -runsteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -prevConf PEEK.6H07 -numConfFiles 100 -ensemble NPT
+# nnc namdConfiguration -type configuration -pdb melt.pdb -psf melt.psf -outName output -temp 310 -runsteps 100 -par parameter.par -rfreq 100 -outfreq 100 -minsteps 10 -prevConf previousfile -numConfFiles 5 -ensemble NPT
 
 # CONTRACT
-# namdConfiguration -type contract -pdb file -psf file -outName file -temp 100 -runsteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -numConfFiles 100 -restartName filere
+# nnc namdConfiguration -type contract -pdb melt.pdb -psf melt.psf -par parameter.par -outName output -prevConf previousfile -temp 310 -rfreq 100 -outfreq 100 -minsteps 10 -runsteps 100 -atommass 12 -radSquare 6400.0 -cteForce 0.0144 -stride 100 -numConfFiles 5
 
 # EXPAND
-# namdConfiguration -type expand -pdb file -psf file -outName file -temp 100 -runsteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -restartName fileres -numConfFiles 100
+# nnc namdConfiguration -type expand -pdb file -psf file -outName file -temp 100 -runsteps 100 -inName file -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -restartName fileres -numConfFiles 100
 
 # FORCECOLLAPSE
 # namdConfiguration -type forcecollapse -pdb file -psf file -outName file -temp 100 -runsteps 100 -par lala.par -rfreq 100 -outfreq 100 -minsteps 10 -restartName fileres -numConfFiles 100
