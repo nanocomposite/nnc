@@ -1420,7 +1420,7 @@ if { [llength $args] < 3 } {
 # nnc namdConfiguration -type contract -pdb melt.pdb -psf melt.psf -par parameter.par -outName output -prevConf previousfile -temp 310 -rfreq 100 -outfreq 100 -minsteps 10 -runsteps 100 -atommass 12 -radSquare 6400.0 -cteForce 0.0144 -stride 100 -numConfFiles 5
 
 # GRID
-# namdConfiguration -type grid -pdb file -psf file -par lala.par -outName file -inName file -temp 100 -restartName restart -rfreq 100 -outfreq 100 -minsteps 10 -runsteps 100
+# nnc namdConfiguration -type grid -pdb melt.pdb -psf melt.psf -par parameter.par -outName grid -temp 700K -prevConf bulk -rfreq 100 -outfreq 100 -minsteps 0 -runsteps 100 -gridforcefile ./files/PEEK.7H034.gforce -gridforcepotfile ./files/PEEK10nmCNT.K0.Free.dx -numConfFiles 5
 
 
 
