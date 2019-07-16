@@ -1304,6 +1304,7 @@ global default1
 #  set args [lindex $args 0]
 #### Set the defaults
 
+ set minSteps 10000
  set numConfFiles 1
  set atommass 12
  set stride 100
@@ -1330,11 +1331,11 @@ global default1
 if { [llength $args] < 3 } {
  switch -exact -- [string tolower [lindex $args 1]] {
 
-    "configuration"    { puts "Info) usage: namdConfiguration -type configuration \[options...\]\n      Available options:\n      -pdb; -psf; -outName; -temp; -runsteps; -inName;\n      -par; -rfreq; -outfreq; -minsteps; -prevConf; -numConfFiles; -ensemble"; return; }
-    "contract"         { puts "Info) usage: namdConfiguration -type contract \[options...\]\n      Available options:\n      -pdb; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -radSquare; -cteForce; -stride; -numConfFiles"; return; }
-    "expand"           { puts "Info) usage: namdConfiguration -type expand \[options...\]\n     Available options:\n      -pdb; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -dWall; -fe; -stride; -numConfFiles"; return; }
-    "forcecollapse"    { puts "Info) usage: namdConfiguration -type forcecollapse \[options...\]\n      Available options:\n      -pdb; -psf; -par -outName; -inName; -temp;\n      -rFreq; -outfreq; -minSteps; -runsteps; -atommass; -dWall;\n      -cteForce; -stride; -numConfFiles"; return; }
-    "grid"             { puts "Info) usage: namdConfiguration -type grid \[options...\]\n      Available options:\n      -pdb; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -gridforcefile;\n      -gridforcepotfile; -numConfFiles"; return; }
+    "configuration"    { puts "Info) usage: namdConfiguration -type configuration \[options...\]\n      Available options:\n      -coor; -psf; -outName; -temp; -runsteps; -inName;\n      -par; -rfreq; -outfreq; -minsteps; -prevConf; -numConfFiles; -ensemble"; return; }
+    "contract"         { puts "Info) usage: namdConfiguration -type contract \[options...\]\n      Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -radSquare; -cteForce; -stride; -numConfFiles"; return; }
+    "expand"           { puts "Info) usage: namdConfiguration -type expand \[options...\]\n     Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -dWall; -fe; -stride; -numConfFiles"; return; }
+    "forcecollapse"    { puts "Info) usage: namdConfiguration -type forcecollapse \[options...\]\n      Available options:\n      -coor; -psf; -par -outName; -inName; -temp;\n      -rFreq; -outfreq; -minSteps; -runsteps; -atommass; -dWall;\n      -cteForce; -stride; -numConfFiles"; return; }
+    "grid"             { puts "Info) usage: namdConfiguration -type grid \[options...\]\n      Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -gridforcefile;\n      -gridforcepotfile; -numConfFiles"; return; }
     default     { error "error: incorrect argument: -type\nIndicating the type of file\n  -type configuration\n  \(also available: contract, expand, forcecollapse, grid\) "}
   }
 
@@ -1346,7 +1347,7 @@ if { [llength $args] < 3 } {
     set val [lindex $args [expr $argnum + 1]]
     switch -- $arg {
       "-type"     { set type        $val; incr argnum; }
-      "-pdb"      { set pdbFile     $val; incr argnum; }
+      "-coor"      { set pdbFile     $val; incr argnum; }
       "-psf"      { set psfFile     $val; incr argnum; }
       "-par"      { set parFile     $val; incr argnum; }
       "-outName"  { set outName     $val; incr argnum; }
@@ -1417,19 +1418,19 @@ if { [llength $args] < 3 } {
 ##########################################################################
 
 # CONFIGURATION 
-# nnc namdConfiguration -type configuration -pdb melt.pdb -psf melt.psf -outName output -temp 310 -runsteps 100 -par parameter.par -rfreq 100 -outfreq 100 -minsteps 10 -prevConf previousfile -numConfFiles 5 -ensemble NPT
+# nnc namdConfiguration -type configuration -coor melt.pdb -psf melt.psf -outName output -temp 310 -runsteps 100 -par parameter.par -rfreq 100 -outfreq 100 -minsteps 10 -prevConf previousfile -numConfFiles 5 -ensemble NPT
 
 # FORCECOLLAPSE
-# nnc namdConfiguration -type forcecollapse -pdb melt.pdb -psf melt.psf -par parameters.par -outName forcecol -temp 1000 -rfreq 100 -outfreq 100 -minsteps 10 -runsteps 100 -atommass 12 -dWall 70 -cteForce 0.072 -stride 100 -numConfFiles 5 
+# nnc namdConfiguration -type forcecollapse -coor melt.pdb -psf melt.psf -par parameters.par -outName forcecol -temp 1000 -rfreq 100 -outfreq 100 -minsteps 10 -runsteps 100 -atommass 12 -dWall 70 -cteForce 0.072 -stride 100 -numConfFiles 5 
 
 # EXPAND
-# nnc namdConfiguration -type expand -pdb melt.pdb -psf melt.psf -par parameter.par -outName expand -prevConf previousfile -temp 310 -rfreq 100 -outfreq 100 -minsteps 10 -runsteps 100 -atommass 12 -dWall 107 -fe 0.0288 -stride 100 -numConfFiles 5
+# nnc namdConfiguration -type expand -coor melt.pdb -psf melt.psf -par parameter.par -outName expand -prevConf previousfile -temp 310 -rfreq 100 -outfreq 100 -minsteps 10 -runsteps 100 -atommass 12 -dWall 107 -fe 0.0288 -stride 100 -numConfFiles 5
 
 # CONTRACT
-# nnc namdConfiguration -type contract -pdb melt.pdb -psf melt.psf -par parameter.par -outName output -prevConf previousfile -temp 310 -rfreq 100 -outfreq 100 -minsteps 10 -runsteps 100 -atommass 12 -radSquare 6400.0 -cteForce 0.0144 -stride 100 -numConfFiles 5
+# nnc namdConfiguration -type contract -coor melt.pdb -psf melt.psf -par parameter.par -outName output -prevConf previousfile -temp 310 -rfreq 100 -outfreq 100 -minsteps 10 -runsteps 100 -atommass 12 -radSquare 6400.0 -cteForce 0.0144 -stride 100 -numConfFiles 5
 
 # GRID
-# nnc namdConfiguration -type grid -pdb melt.pdb -psf melt.psf -par parameter.par -outName grid -temp 700K -prevConf bulk -rfreq 100 -outfreq 100 -minsteps 0 -runsteps 100 -gridforcefile ./files/PEEK.7H034.gforce -gridforcepotfile ./files/PEEK10nmCNT.K0.Free.dx -numConfFiles 5
+# nnc namdConfiguration -type grid -coor melt.pdb -psf melt.psf -par parameter.par -outName grid -temp 700K -prevConf bulk -rfreq 100 -outfreq 100 -minsteps 0 -runsteps 100 -gridforcefile ./files/PEEK.7H034.gforce -gridforcepotfile ./files/PEEK10nmCNT.K0.Free.dx -numConfFiles 5
 
 
 
