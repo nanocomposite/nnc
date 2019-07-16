@@ -5,6 +5,7 @@
 # If other words are typed no file will be generated
 
 proc namdCreateConfig {list2} {
+global default1
 
 set iname [lindex $list2 2]
 
@@ -32,7 +33,7 @@ append name "."
 append name $outVal
 set list2 [lreplace $list2 2 2 $name]
 
-if { $i >= 1 } {
+if { ($i >= 1)  && ( $default1 == 1)  } {
 set inval [ format "%03d" [expr {$i -1}] ];
 
 set namein $iname
@@ -200,6 +201,7 @@ close $fileid
 ######################################
 
 proc namdCreateCont {list2} {
+global default1
 
 set iname [lindex $list2 3]
 
@@ -212,7 +214,7 @@ append name "."
 append name $outVal
 set list2 [lreplace $list2 3 3 $name]
 
-if { $i >= 1 } {
+if { ($i >= 1)  && ( $default1 == 1)  } {
 set inval [ format "%03d" [expr {$i -1}] ];
 
 set namein $iname
@@ -528,6 +530,7 @@ close $fileid
 #############################################
 
 proc namdCreateEX {list2} {
+global default1
 
 set iname [lindex $list2 3]
 
@@ -539,7 +542,7 @@ append name "."
 append name $outVal
 set list2 [lreplace $list2 3 3 $name]
 
-if { $i >= 1 } {
+if { ($i >= 1)  && ( $default1 == 1)  } {
 set inval [ format "%03d" [expr {$i -1}] ];
 
 set namein $iname
@@ -829,6 +832,7 @@ close $fileid
 # forcecollapse
 
 proc CreateFC {list2} {
+global default1
 
 set iname [lindex $list2 3]
 
@@ -840,7 +844,7 @@ append name "."
 append name $outVal
 set list2 [lreplace $list2 3 3 $name]
 
-if { $i >= 1 } {
+if { ($i >= 1)  && ( $default1 == 1)  } {
 set inval [ format "%03d" [expr {$i -1}] ];
 
 set namein $iname
@@ -1096,6 +1100,7 @@ close $fileid
 ########################################
 
 proc CreateGrid {list2} {
+global default1
 
 set iname [lindex $list2 3]
 
@@ -1107,7 +1112,7 @@ append name $outVal
 set list2 [lreplace $list2 3 3 $name]
 set outname [lindex $list2 3]
 
-if { $i >= 1 } {
+if { ($i >= 1)  && ( $default1 == 1)  } {
 set inval [ format "%03d" [expr {$i -1}] ];
 
 set namein $iname
@@ -1294,7 +1299,7 @@ namespace eval ::NanoComposite:: {
 
 
 proc nncnamdConfiguration {args} {
-
+global default1
 # If things don't work maybe the list is in the first element of args
 #  set args [lindex $args 0]
 #### Set the defaults
@@ -1385,7 +1390,11 @@ if { [llength $args] < 3 } {
 
 ###########################################
 # Here you can put specific variables for every type of file, we use this part to create the files according to the -type option
-  if { $inName == "" } {set inName $outName};
+
+# the variable default1 helps us to tell if the default option for -inName is being used
+  set default1 0
+  if { $inName == "" } {set default1 1; set inName $outName};
+
 
   switch -exact -- [string tolower $type] {
 
