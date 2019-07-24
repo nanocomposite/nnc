@@ -1,5 +1,5 @@
 #!/usr/bin/tclsh
-## Script to create a namd configuration file for minimization, equilibration
+## Script to create a namd configuration file for equilibration
 # and Annealing
 # Available ensembles: NPT, NVT, NVE
 # If other words are typed no file will be generated
@@ -61,6 +61,16 @@ extendedSystem     ./[lindex $list2 10].xsc\n
 
 firsttimestep 0\n"
 
+if { ([lindex $list2 13] != 0) && ([lindex $list2 14] != 0) && ([lindex $list2 15] != 0) } {
+puts $fileid "
+#Periodic boundary conditions
+cellBasisVector1     [lindex $list2 13]     0.    0.
+cellBasisVector2      0.    [lindex $list2 14]    0.
+cellBasisVector3      0.     0.   [lindex $list2 15]
+cellOrigin            0.     0.    0.\n"
+}
+
+
 } else {
 puts $fileid "
 
@@ -84,9 +94,30 @@ proc get_first_ts { xscfile } {\n\n
 
 }
 
+
+if { [lindex $list2 16] == 0} {
+
+puts $fileid "
+wrapWater           off
+wrapAll             off
+"
+} else {
+puts $fileid "
+wrapWater           on
+wrapAll             on
+"
+}
+
+
+
+
+
+
 puts $fileid "#############################################################\n## SIMULATION PARAMETERS                                   ##\n#############################################################\n## Input\n"
 puts $fileid "paraTypeCharmm      on \n
-parameters [lindex $list2 6];\n# Periodic Boundary conditions\nwrapWater           off\nwrapAll             off\n"
+parameters [lindex $list2 6];
+
+"
 
 puts $fileid "# Force-Field Parameters
 
@@ -107,6 +138,7 @@ stepspercycle       20\n"
 if { $ensemble == 0} {
 
 puts $fileid "
+
 
 #PME (for full-system periodic electrostatics)
 PME                 yes
@@ -167,7 +199,7 @@ useConstantArea no\n
 
 puts $fileid "\n# Output
 outputName          \$outputname
-restartname         \$inputname.restart
+restartname         \$outputname.restart
 dcdfile             \$outputname.dcd
 xstFile             \$outputname.xst\n
 
@@ -348,7 +380,7 @@ langevinPistonTemp    \$temperature
 \n 
 # Output \n 
 outputName          \$outName  
-restartname         \$restartName.restart  
+restartname         \$outName.restart  
 dcdfile             \$outName.dcd  
 xstFile             \$outName.xst  
 \n 
@@ -556,7 +588,7 @@ set fileid [open $name.namd w]
 
 puts $fileid "#############################################################\n##JOB DESCRIPTION                                         ##\n#############################################################\n 
 \n
-# contract simulation\n 
+# Expand simulation\n 
 \n 
 ############################################################# 
 ## ADJUSTABLE PARAMETERS                                   ## 
@@ -665,7 +697,7 @@ langevinHydrogen    no    ;# don't couple langevin bath to hydrogens
 \n 
 # Output 
 outputName          \$outName 
-restartname         \$restartName.restart 
+restartname         \$outName.restart 
 dcdfile             \$outName.dcd 
 xstFile             \$outName.xst  
 \n 
@@ -944,7 +976,7 @@ langevinHydrogen    no    ;# don't couple langevin bath to hydrogens
  \n 
 # Output \n 
 outputName          \$outName  
-restartname         \$restartName.restart  
+restartname         \$outName.restart  
 dcdfile             \$outName.dcd  
 xstFile             \$outName.xst  
  \n 
@@ -970,8 +1002,8 @@ tclBCScript {
     set lowMass [expr {[lindex $list2 10] - 0.3} ];  
     set highMass [expr {[lindex $list2 10] + 0.3}];
     # box limit, centered at (0,0,0)
-    set bottomWall [expr {(-1)*([lindex $list2 11])}];
-    set topWall [lindex $list2 11];  
+    set bottomWall [expr {(-1)*([lindex $list2 11]/2)}];
+    set topWall [expr {[lindex $list2 11]/2}];  
     # cte force ( 0.0144 namdU = 1pN ) \n 
     set cteForce [lindex $list2 12] \n 
     
@@ -1126,7 +1158,7 @@ set fileid [open $outname.namd w]
 
 puts $fileid "#############################################################\n##JOB DESCRIPTION                                         ##\n #############################################################\n 
 
-# contract simulation\n 
+# Grid simulation\n 
 \n 
 #############################################################\n 
 ## ADJUSTABLE PARAMETERS                                   ##\n 
@@ -1239,7 +1271,7 @@ langevinPistonTemp    \$temperature
 \n 
 # Output  
 outputName          \$outName  
-restartname         \$restartName.restart  
+restartname         \$outName.restart  
 dcdfile             \$outName.dcd  
 xstFile             \$outName.xst  
  
@@ -1304,6 +1336,10 @@ global default1
 #  set args [lindex $args 0]
 #### Set the defaults
 
+ set wrap 0
+ set a 0
+ set b 0
+ set c 0
  set minSteps 10000
  set numConfFiles 1
  set atommass 12
@@ -1323,7 +1359,7 @@ global default1
  set x [info exists [lindex $args 0]]
 
  if { [llength $args] < 2} {
-     puts "Info) usage: namdConfiguration \[options...\] \n      Indicating the type of file\n      -type configuration\n      \(also available: contract, expand, forcecollapse, grid\) "
+     puts "Info) usage: namdConfiguration \[options...\] \n      Indicating the type of file\n      -type equilibration\n      \(also available: contract, expand, forcecollapse, grid\) "
      return 
  }
  
@@ -1331,12 +1367,12 @@ global default1
 if { [llength $args] < 3 } {
  switch -exact -- [string tolower [lindex $args 1]] {
 
-    "configuration"    { puts "Info) usage: namdConfiguration -type configuration \[options...\]\n      Available options:\n      -coor; -psf; -outName; -temp; -runsteps; -inName;\n      -par; -rfreq; -outfreq; -minsteps; -prevConf; -numConfFiles; -ensemble"; return; }
+    "equilibration"    { puts "Info) usage: namdConfiguration -type equilibration \[options...\]\n      Available options:\n      -coor; -psf; -outName; -temp; -runsteps; -inName;\n      -par; -rfreq; -outfreq; -minsteps; -prevConf; -numConfFiles; -ensemble; -a; -b; -c; -wrap"; return; }
     "contract"         { puts "Info) usage: namdConfiguration -type contract \[options...\]\n      Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -radSquare; -cteForce; -stride; -numConfFiles"; return; }
     "expand"           { puts "Info) usage: namdConfiguration -type expand \[options...\]\n     Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -dWall; -fe; -stride; -numConfFiles"; return; }
     "forcecollapse"    { puts "Info) usage: namdConfiguration -type forcecollapse \[options...\]\n      Available options:\n      -coor; -psf; -par -outName; -inName; -temp;\n      -rFreq; -outfreq; -minSteps; -runsteps; -atommass; -dWall;\n      -cteForce; -stride; -numConfFiles"; return; }
     "grid"             { puts "Info) usage: namdConfiguration -type grid \[options...\]\n      Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -gridforcefile;\n      -gridforcepotfile; -numConfFiles"; return; }
-    default     { error "error: incorrect argument: -type\nIndicating the type of file\n  -type configuration\n  \(also available: contract, expand, forcecollapse, grid\) "}
+    default     { error "error: incorrect argument: -type\nIndicating the type of file\n  -type equilibration\n  \(also available: contract, expand, forcecollapse, grid\) "}
   }
 
 }
@@ -1368,6 +1404,10 @@ if { [llength $args] < 3 } {
       "-dWall"    { set dWall       $val; incr argnum; }
       "-radSquare" { set radSquare  $val; incr argnum; }
       "-ensemble"  { set ensemble   [string toupper $val]; incr argnum; }
+      "-a"         { set a $val; incr argnum; }
+      "-b"         { set b $val; incr argnum; }
+      "-c"         { set c $val; incr argnum; }
+      "wrap"       { set wrap $val; incr argnum; }
       default     { error "error: aggregate: unknown option: $arg"}
     }
 #    lappend inputlist $val
@@ -1399,7 +1439,7 @@ if { [llength $args] < 3 } {
 
   switch -exact -- [string tolower $type] {
 
-   "configuration"    { set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $ensemble ]; namdCreateConfig $list2; }
+   "equilibration"    { set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $ensemble $a $b $c $wrap]; namdCreateConfig $list2; }
    "contract"         { if { $cteForce == "" } {set cteForce 0.0144}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]; namdCreateCont   $list2; } 
    "expand"           { if { $dWall == "" } {set dWall 107}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $fe $stride $numConfFiles]; namdCreateEX     $list2; }
    "forcecollapse"    { if { $dWall == "" } {set dWall 70}; if { $cteForce == "" } {set cteForce 0.072}; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
@@ -1418,7 +1458,7 @@ if { [llength $args] < 3 } {
 ##########################################################################
 
 # CONFIGURATION 
-# nnc namdConfiguration -type configuration -coor melt.pdb -psf melt.psf -outName output -temp 310 -runsteps 100 -par parameter.par -rfreq 100 -outfreq 100 -minsteps 10 -prevConf previousfile -numConfFiles 5 -ensemble NPT
+# nnc namdConfiguration -type equilibration -coor melt.pdb -psf melt.psf -outName equilibrate -temp 310 -runsteps 100 -par parameter.par -rfreq 100 -outfreq 100 -minsteps 10 -prevConf previousfile -numConfFiles 5 -ensemble NPT
 
 # FORCECOLLAPSE
 # nnc namdConfiguration -type forcecollapse -coor melt.pdb -psf melt.psf -par parameters.par -outName forcecol -temp 1000 -rfreq 100 -outfreq 100 -minsteps 10 -runsteps 100 -atommass 12 -dWall 70 -cteForce 0.072 -stride 100 -numConfFiles 5 
