@@ -110,9 +110,6 @@ wrapAll             on
 
 
 
-
-
-
 puts $fileid "#############################################################\n## SIMULATION PARAMETERS                                   ##\n#############################################################\n## Input\n"
 puts $fileid "paraTypeCharmm      on \n
 parameters [lindex $list2 6];
@@ -1407,7 +1404,7 @@ if { [llength $args] < 3 } {
       "-a"         { set a $val; incr argnum; }
       "-b"         { set b $val; incr argnum; }
       "-c"         { set c $val; incr argnum; }
-      "wrap"       { set wrap $val; incr argnum; }
+      "-wrap"       { set wrap $val; incr argnum; }
       default     { error "error: aggregate: unknown option: $arg"}
     }
 #    lappend inputlist $val
