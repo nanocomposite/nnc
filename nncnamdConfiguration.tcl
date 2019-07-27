@@ -207,11 +207,15 @@ outputEnergies      [lindex $list2 8];
 outputPressure      [lindex $list2 8];"
 
 puts $fileid "#############################################################\n## EXTRA PARAMETERS                                        ##\n#############################################################\n## Put here any custom parameters that are specific to\n# this job (e.g., SMD, TclForces, etc...)\n\n#############################################################\n## EXECUTION SCRIPT                                        ##\n#############################################################\n"
+
+
+
+if { $i ==  0 } {
+
 puts $fileid "# Minimization\n
 minimize            [lindex $list2 9];
 reinitvels          \$temperature;"
 
-if { $i ==  0 } {
 puts $fileid "run \$runSteps; \n"
 } else {
 puts $fileid "
@@ -1438,8 +1442,8 @@ if { [llength $args] < 3 } {
 
    "equilibration"    { set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $ensemble $a $b $c $wrap]; namdCreateConfig $list2; }
    "contract"         { if { $cteForce == "" } {set cteForce 0.0144}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]; namdCreateCont   $list2; } 
-   "expand"           { if { $dWall == "" } {set dWall 107}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $fe $stride $numConfFiles]; namdCreateEX     $list2; }
-   "forcecollapse"    { if { $dWall == "" } {set dWall 70}; if { $cteForce == "" } {set cteForce 0.072}; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
+   "expand"           { if { $dWall == "" } {set dWall 70}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $fe $stride $numConfFiles]; namdCreateEX     $list2; }
+   "forcecollapse"    { if { $dWall == "" } {mol load psf $psfFile namdbin $pdbFile; set sel [atomselect 0 all]; set m1 [measure sumweights $sel weight mass]; unset sel; mol delete 0; set dWall [expr { pow(($m1*(10)/(6.022)), 1/(3.0))  }]; unset m1 }; if { $cteForce == "" } {set cteForce 0.072}; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
    "grid"             { set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $gridforcefile $gridforcepotfile $numConfFiles]; CreateGrid       $list2; }
    default     { error "error: incorrect argument: -type"}
   }
