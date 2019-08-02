@@ -54,13 +54,22 @@ set runSteps       [lindex $list2 4];
 \n"
 
 if { $i == 0 } {
+
+if { [lindex $list2 10] == "" } {
+puts $fileid "
+
+temperature \$temperature
+
+firsttimestep 0\n"
+
+} else {
 puts $fileid "
 bincoordinates     ./[lindex $list2 10].coor
 binvelocities      ./[lindex $list2 10].vel
 extendedSystem     ./[lindex $list2 10].xsc\n
 
 firsttimestep 0\n"
-
+}
 if { ([lindex $list2 13] != 0) && ([lindex $list2 14] != 0) && ([lindex $list2 15] != 0) } {
 puts $fileid "
 #Periodic boundary conditions
@@ -206,6 +215,18 @@ xstFreq             [lindex $list2 8];
 outputEnergies      [lindex $list2 8];
 outputPressure      [lindex $list2 8];"
 
+if { [lindex $list2 17] != "" } {
+puts $fileid "
+constraints on
+consref [lindex $list2 17]
+conskfile [lindex $list2 17]
+conskcol B
+# Harmonic constant of 1 kcal/molA
+constraintScaling 1.0 \n"
+
+}
+
+
 puts $fileid "#############################################################\n## EXTRA PARAMETERS                                        ##\n#############################################################\n## Put here any custom parameters that are specific to\n# this job (e.g., SMD, TclForces, etc...)\n\n#############################################################\n## EXECUTION SCRIPT                                        ##\n#############################################################\n"
 
 
@@ -287,7 +308,7 @@ set restartFreq    [lindex $list2 7];
 set outFreq        [lindex $list2 8]; 
 \n 
 set minSteps       [lindex $list2 9]; 
-set mdSteps        [lindex $list2 10]; 
+set runSteps        [lindex $list2 10]; 
 \n 
 ############################################################# 
 ## SIMULATION PARAMETERS                                   ## 
@@ -534,26 +555,22 @@ tclBCArgs { } \n
 #############################################################\n 
 ## EXECUTION SCRIPT                                        ##\n 
 #############################################################\n 
-\n 
-# Minimization\n 
+" 
+
+if { $i ==  0 } {
+
+puts $fileid "# Minimization\n
 minimize            \$minSteps;
-reinitvels          \$temperature;
-\n 
-# Dynamics\n 
-" 
+reinitvels          \$temperature;"
 
-if { $i == 0 } {
-puts $fileid "run \$mdSteps\n 
-\n 
-
-" 
-
+puts $fileid "run \$runSteps; \n"
 } else {
-
-puts $fileid "set stepP \[expr \$mdSteps - \$firsttime \] \n
-run \$stepP  ;"
-
+puts $fileid "
+set stepP \[expr \$runSteps - \$firsttime \];\n
+run \$stepP ; \n"
 }
+
+
 close $fileid
 }
 }
@@ -615,7 +632,7 @@ set restartFreq    [lindex $list2 7];
 set outFreq        [lindex $list2 8]; 
 \n 
 set minSteps       [lindex $list2 9]; 
-set mdSteps        [lindex $list2 10]; 
+set runSteps        [lindex $list2 10]; 
 \n 
 ############################################################# 
 ## SIMULATION PARAMETERS                                   ## 
@@ -727,8 +744,8 @@ tclBCScript { \n
     set highMass [expr {[lindex $list2 11] + 0.3} ]; 
     
     # box limit, centered at (0,0,0) 
-    set bottomWall [expr {(-1)*([lindex $list2 12])}]; 
-    set topWall [lindex $list2 12]; 
+    set bottomWall [expr {(-1)*([lindex $list2 12]/2.0)}]; 
+    set topWall [ expr {[lindex $list2 12]/2.0}]; 
     
     # linear force ( 0.0144 namdU = 1pN ) 
     # decay 1000A : 100 pN, 80A : 5 pN
@@ -834,23 +851,20 @@ tclBCArgs { } \n
 ############################################################# 
 ## EXECUTION SCRIPT                                        ## 
 ############################################################# 
-\n 
-# Minimization\n 
-minimize            \$minSteps;
-reinitvels          \$temperature; 
-
 
 # Dynamics\n" 
 
-if { $i == 0 } {
-puts $fileid "run \$mdSteps\n 
-" 
+if { $i ==  0 } {
 
+puts $fileid "# Minimization\n
+minimize            \$minSteps;
+reinitvels          \$temperature;"
+
+puts $fileid "run \$runSteps; \n"
 } else {
-
-puts $fileid "set stepP \[expr \$mdSteps - \$firsttime \] \n
-run \$stepP  ;"
-
+puts $fileid "
+set stepP \[expr \$runSteps - \$firsttime \];\n
+run \$stepP ; \n"
 }
 
 close $fileid
@@ -1141,6 +1155,7 @@ for {set i 0} {$i < [lindex $list2 13]} {incr i} {
 
 set outVal [ format "%03d" $i ];
 set name $iname
+append name "."
 append name $outVal
 set list2 [lreplace $list2 3 3 $name]
 set outname [lindex $list2 3]
@@ -1286,6 +1301,7 @@ outputEnergies      \$outFreq;
 #############################################################  
  
 gridforce yes
+gridforcechecksize off
 gridforcefile [lindex $list2 11] 
 
 gridforcecol O
@@ -1293,7 +1309,7 @@ gridforcechargecol B
 
 gridforcepotfile [lindex $list2 12] 
 
-gridforcescale 0.10 0.10 0.10
+gridforcescale [lindex $list2 13] [lindex $list2 13] [lindex $list2 13]
 
 gridforcevolts no 
 gridforcecont1 no 
@@ -1304,14 +1320,19 @@ gridforcecont3 no
 #############################################################
 ## EXECUTION SCRIPT                                        ## 
 ############################################################# 
+"
+if { $i ==  0 } {
 
-# Minimization
-minimize            \$minSteps; 
-reinitvels          \$temperature; 
+puts $fileid "# Minimization\n
+minimize            \$minSteps;
+reinitvels          \$temperature;"
 
-# Dynamics 
-
-run \$mdSteps " 
+puts $fileid "run \$runSteps; \n"
+} else {
+puts $fileid "
+set stepP \[expr \$runSteps - \$firsttime \];\n
+run \$stepP ; \n"
+}
 
 close $fileid
 }
@@ -1342,6 +1363,7 @@ global default1
  set b 0
  set c 0
  set minSteps 10000
+ set runSteps 1000000
  set numConfFiles 1
  set atommass 12
  set stride 100
@@ -1355,7 +1377,13 @@ global default1
  set cteForce ""
  set dWall ""
  set temp 310
-
+ set numConfFiles 10
+ set rFreq 10000
+ set outFreq 100000
+ set prevConf ""
+ set hconstraint ""
+ set sfactor 0.10
+ 
 # To get to know the usage of namdConfiguration
  set x [info exists [lindex $args 0]]
 
@@ -1368,11 +1396,11 @@ global default1
 if { [llength $args] < 3 } {
  switch -exact -- [string tolower [lindex $args 1]] {
 
-    "equilibration"    { puts "Info) usage: namdConfiguration -type equilibration \[options...\]\n      Available options:\n      -coor; -psf; -outName; -temp; -runsteps; -inName;\n      -par; -rfreq; -outfreq; -minsteps; -prevConf; -numConfFiles; -ensemble; -a; -b; -c; -wrap"; return; }
+    "equilibration"    { puts "Info) usage: namdConfiguration -type equilibration \[options...\]\n      Available options:\n      -coor; -psf; -outName; -temp; -runsteps; -inName;\n      -par; -rfreq; -outfreq; -minsteps; -prevConf; -numConfFiles;\n -ensemble; -a; -b; -c; -wrap; -restraint"; return; }
     "contract"         { puts "Info) usage: namdConfiguration -type contract \[options...\]\n      Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -radSquare; -cteForce; -stride; -numConfFiles"; return; }
     "expand"           { puts "Info) usage: namdConfiguration -type expand \[options...\]\n     Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -dWall; -fe; -stride; -numConfFiles"; return; }
     "forcecollapse"    { puts "Info) usage: namdConfiguration -type forcecollapse \[options...\]\n      Available options:\n      -coor; -psf; -par -outName; -inName; -temp;\n      -rFreq; -outfreq; -minSteps; -runsteps; -atommass; -dWall;\n      -cteForce; -stride; -numConfFiles"; return; }
-    "grid"             { puts "Info) usage: namdConfiguration -type grid \[options...\]\n      Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -gridforcefile;\n      -gridforcepotfile; -numConfFiles"; return; }
+    "grid"             { puts "Info) usage: namdConfiguration -type grid \[options...\]\n      Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -gridforcefile;\n      -gridforcepotfile; -numConfFiles; -sfactor"; return; }
     default     { error "error: incorrect argument: -type\nIndicating the type of file\n  -type equilibration\n  \(also available: contract, expand, forcecollapse, grid\) "}
   }
 
@@ -1409,6 +1437,8 @@ if { [llength $args] < 3 } {
       "-b"         { set b $val; incr argnum; }
       "-c"         { set c $val; incr argnum; }
       "-wrap"       { set wrap $val; incr argnum; }
+      "-hrestraint" { set hrestraint $val; incr argnum; }
+      "-sfactor" { set sfactor $val; incr argnum; }
       default     { error "error: aggregate: unknown option: $arg"}
     }
 #    lappend inputlist $val
@@ -1418,7 +1448,7 @@ if { [llength $args] < 3 } {
 
 
 # in order to make sure that data was added 
-  set vars [list "pdbFile" "psfFile" "outName" "runSteps" "parFile" "rFreq" "outFreq" "runSteps"]
+  set vars [list "pdbFile" "psfFile" "outName" "parFile" "runSteps"]
   for {set count_var 0} {$count_var < [llength $vars]} {incr count_var} {
     set z [lindex $vars $count_var]
     set x [info exists $z]
@@ -1437,14 +1467,15 @@ if { [llength $args] < 3 } {
   set default1 0
   if { $inName == "" } {set default1 1; set inName $outName};
 
+# for Force Collapse, if no "dWall" is input, the default is the edge of a box that gives a density of 1 g/cc
 
   switch -exact -- [string tolower $type] {
 
-   "equilibration"    { set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $ensemble $a $b $c $wrap]; namdCreateConfig $list2; }
+   "equilibration"    { set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $ensemble $a $b $c $wrap $hrestraint]; namdCreateConfig $list2; }
    "contract"         { if { $cteForce == "" } {set cteForce 0.0144}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]; namdCreateCont   $list2; } 
    "expand"           { if { $dWall == "" } {set dWall 70}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $fe $stride $numConfFiles]; namdCreateEX     $list2; }
-   "forcecollapse"    { if { $dWall == "" } {mol load psf $psfFile namdbin $pdbFile; set sel [atomselect 0 all]; set m1 [measure sumweights $sel weight mass]; unset sel; mol delete 0; set dWall [expr { pow(($m1*(10)/(6.022)), 1/(3.0))  }]; unset m1 }; if { $cteForce == "" } {set cteForce 0.072}; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
-   "grid"             { set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $gridforcefile $gridforcepotfile $numConfFiles]; CreateGrid       $list2; }
+   "forcecollapse"    { if { $dWall == "" } {mol load psf $psfFile pdb $pdbFile; set sel [atomselect 0 all]; set m1 [measure sumweights $sel weight mass]; unset sel; mol delete 0; set dWall [expr { pow(($m1*(10)/(6.022)), 1/(3.0))  }]; unset m1 }; if { $cteForce == "" } {set cteForce 0.072}; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
+   "grid"             { set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $gridforcefile $gridforcepotfile $numConfFiles $sfactor]; CreateGrid       $list2; }
    default     { error "error: incorrect argument: -type"}
   }
 
@@ -1472,15 +1503,4 @@ if { [llength $args] < 3 } {
 
 # GRID
 # nnc namdConfiguration -type grid -coor melt.pdb -psf melt.psf -par parameter.par -outName grid -temp 700K -prevConf bulk -rfreq 100 -outfreq 100 -minsteps 0 -runsteps 100 -gridforcefile ./files/PEEK.7H034.gforce -gridforcepotfile ./files/PEEK10nmCNT.K0.Free.dx -numConfFiles 5
-
-
-
-
-
-
-
-
-
-
-
 
