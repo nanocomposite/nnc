@@ -56,20 +56,35 @@ set runSteps       [lindex $list2 4];
 if { $i == 0 } {
 
 if { [lindex $list2 10] == "" } {
+
+if { [lindex $list2 18] != "" } {
+puts $fileid "
+
+extendedSystem     ./[lindex $list2 18]\n
+
+temperature \$temperature
+
+firsttimestep 0\n
+"
+} else {
+
 puts $fileid "
 
 temperature \$temperature
 
 firsttimestep 0\n"
-
+}
 } else {
+
 puts $fileid "
 bincoordinates     ./[lindex $list2 10].coor
 binvelocities      ./[lindex $list2 10].vel
 extendedSystem     ./[lindex $list2 10].xsc\n
 
 firsttimestep 0\n"
+
 }
+
 if { ([lindex $list2 13] != 0) && ([lindex $list2 14] != 0) && ([lindex $list2 15] != 0) } {
 puts $fileid "
 #Periodic boundary conditions
@@ -1383,6 +1398,7 @@ global default1
  set prevConf ""
  set hconstraint ""
  set sfactor 0.10
+ set xsc ""
  
 # To get to know the usage of namdConfiguration
  set x [info exists [lindex $args 0]]
@@ -1396,7 +1412,7 @@ global default1
 if { [llength $args] < 3 } {
  switch -exact -- [string tolower [lindex $args 1]] {
 
-    "equilibration"    { puts "Info) usage: namdConfiguration -type equilibration \[options...\]\n      Available options:\n      -coor; -psf; -outName; -temp; -runsteps; -inName;\n      -par; -rfreq; -outfreq; -minsteps; -prevConf; -numConfFiles;\n -ensemble; -a; -b; -c; -wrap; -restraint"; return; }
+    "equilibration"    { puts "Info) usage: namdConfiguration -type equilibration \[options...\]\n      Available options:\n      -coor; -psf; -outName; -temp; -runsteps; -inName;\n      -par; -rfreq; -outfreq; -minsteps; -prevConf; -numConfFiles;\n -ensemble; -a; -b; -c; -wrap; -restraint; -xsc"; return; }
     "contract"         { puts "Info) usage: namdConfiguration -type contract \[options...\]\n      Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -radSquare; -cteForce; -stride; -numConfFiles"; return; }
     "expand"           { puts "Info) usage: namdConfiguration -type expand \[options...\]\n     Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -dWall; -fe; -stride; -numConfFiles"; return; }
     "forcecollapse"    { puts "Info) usage: namdConfiguration -type forcecollapse \[options...\]\n      Available options:\n      -coor; -psf; -par -outName; -inName; -temp;\n      -rFreq; -outfreq; -minSteps; -runsteps; -atommass; -dWall;\n      -cteForce; -stride; -numConfFiles"; return; }
@@ -1439,6 +1455,7 @@ if { [llength $args] < 3 } {
       "-wrap"       { set wrap $val; incr argnum; }
       "-hrestraint" { set hrestraint $val; incr argnum; }
       "-sfactor" { set sfactor $val; incr argnum; }
+      "-xsc" { set xsc $val; incr argnum; } 
       default     { error "error: aggregate: unknown option: $arg"}
     }
 #    lappend inputlist $val
@@ -1471,7 +1488,7 @@ if { [llength $args] < 3 } {
 
   switch -exact -- [string tolower $type] {
 
-   "equilibration"    { set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $ensemble $a $b $c $wrap $hrestraint]; namdCreateConfig $list2; }
+   "equilibration"    { set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $ensemble $a $b $c $wrap $hrestraint $xsc]; namdCreateConfig $list2; }
    "contract"         { if { $cteForce == "" } {set cteForce 0.0144}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]; namdCreateCont   $list2; } 
    "expand"           { if { $dWall == "" } {set dWall 70}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $fe $stride $numConfFiles]; namdCreateEX     $list2; }
    "forcecollapse"    { if { $dWall == "" } {mol load psf $psfFile pdb $pdbFile; set sel [atomselect 0 all]; set m1 [measure sumweights $sel weight mass]; unset sel; mol delete 0; set dWall [expr { pow(($m1*(10)/(6.022)), 1/(3.0))  }]; unset m1 }; if { $cteForce == "" } {set cteForce 0.072}; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
