@@ -1396,7 +1396,7 @@ global default1
  set rFreq 10000
  set outFreq 100000
  set prevConf ""
- set hconstraint ""
+ set hrestraint ""
  set sfactor 0.10
  set xsc ""
  
@@ -1488,7 +1488,7 @@ if { [llength $args] < 3 } {
 
   switch -exact -- [string tolower $type] {
 
-   "equilibration"    { set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $ensemble $a $b $c $wrap $hrestraint $xsc]; namdCreateConfig $list2; }
+   "equilibration"    { if { $a == "calculate" || $b == "calculate" || $c == "calculate" } {mol load psf $psfFile namdbin $prevConf.coor; set sel [atomselect 0 all]; set v1 [measure minmax $sel]; unset sel; mol delete 0; set a [ expr { [lindex $v1 0 0] - [lindex $v1 1 0]  }]; set b [ expr { [lindex $v1 0 1] - [lindex $v1 1 1]  }]; set c [ expr { [lindex $v1 0 2] - [lindex $v1 1 2]  }]}; set list2 [list $pdbFile $psfFile $outName $temp $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $ensemble $a $b $c $wrap $hrestraint $xsc]; namdCreateConfig $list2; }
    "contract"         { if { $cteForce == "" } {set cteForce 0.0144}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $radSquare $cteForce $stride $numConfFiles]; namdCreateCont   $list2; } 
    "expand"           { if { $dWall == "" } {set dWall 70}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $fe $stride $numConfFiles]; namdCreateEX     $list2; }
    "forcecollapse"    { if { $dWall == "" } {mol load psf $psfFile pdb $pdbFile; set sel [atomselect 0 all]; set m1 [measure sumweights $sel weight mass]; unset sel; mol delete 0; set dWall [expr { pow(($m1*(10)/(6.022)), 1/(3.0))  }]; unset m1 }; if { $cteForce == "" } {set cteForce 0.072}; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
