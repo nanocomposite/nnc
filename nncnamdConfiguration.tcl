@@ -1214,7 +1214,7 @@ set restartFreq    [lindex $list2 7];
 set outFreq        [lindex $list2 8]; 
 
 set minSteps       [lindex $list2 9]; 
-set mdSteps        [lindex $list2 10]; 
+set runSteps        [lindex $list2 10]; 
 
 ############################################################# 
 ## SIMULATION PARAMETERS                                   ## 
