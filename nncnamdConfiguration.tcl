@@ -1324,7 +1324,7 @@ gridforcechargecol B
 
 gridforcepotfile [lindex $list2 12] 
 
-gridforcescale [lindex $list2 13] [lindex $list2 13] [lindex $list2 13]
+gridforcescale [lindex $list2 14] [lindex $list2 14] [lindex $list2 14]
 
 gridforcevolts no 
 gridforcecont1 no 
