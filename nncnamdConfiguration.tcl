@@ -1,4 +1,9 @@
 #!/usr/bin/tclsh
+
+#####################################
+##        Equilibration            ##
+#####################################
+# Equilibration
 ## Script to create a namd configuration file for equilibration
 # and Annealing
 # Available ensembles: NPT, NVT, NVE
@@ -262,6 +267,243 @@ run \$stepP ; \n"
 close $fileid
 }
 }
+
+
+##############################
+##        Anneal            ##
+##############################
+# 
+## Script to create a namd configuration file for Annealing with gradual cooling
+# Available ensembles: NPT
+# If other words are typed no file will be generated
+
+proc namdAnneal {list2} {
+global default1
+
+set iname [lindex $list2 2]
+
+# To get the ensemble
+
+
+
+
+for {set i 0} {$i < [lindex $list2 10]} {incr i} {
+
+set outVal [ format "%03d" $i ];
+
+set name $iname
+append name "."
+append name $outVal
+set list2 [lreplace $list2 2 2 $name]
+
+if { ($i >= 1)  && ( $default1 == 1)  } {
+set inval [ format "%03d" [expr {$i -1}] ];
+
+set namein $iname
+append namein "."
+append namein $inval
+set list2 [lreplace $list2 4 4 $namein]
+}
+
+#set outname [lindex $list2 2]
+set fileid [open $name.namd w]
+#puts "I am working"
+puts $fileid "#############################################################\n## JOB DESCRIPTION                                         ##\n#############################################################\n\n\n#############################################################\n## ADJUSTABLE PARAMETERS                                   ##\n#############################################################\n"
+puts $fileid "structure          [lindex $list2 1];
+coordinates        [lindex $list2 0];
+set outputname     [lindex $list2 2];
+set temperature    [lindex $list2 17];
+set runSteps       [lindex $list2 3];
+\n"
+
+if { $i == 0 } {
+
+if { [lindex $list2 9] == "" } {
+
+if { [lindex $list2 16] != "" } {
+puts $fileid "
+
+extendedSystem     ./[lindex $list2 16]\n
+
+temperature \$temperature
+
+firsttimestep 0\n
+"
+} else {
+
+puts $fileid "
+
+temperature \$temperature
+
+firsttimestep 0\n"
+}
+} else {
+
+puts $fileid "
+bincoordinates     ./[lindex $list2 9].coor
+binvelocities      ./[lindex $list2 9].vel
+extendedSystem     ./[lindex $list2 9].xsc\n
+
+firsttimestep 0\n"
+
+}
+
+if { ([lindex $list2 11] != 0) && ([lindex $list2 12] != 0) && ([lindex $list2 13] != 0) } {
+puts $fileid "
+#Periodic boundary conditions
+cellBasisVector1     [lindex $list2 11]     0.    0.
+cellBasisVector2      0.    [lindex $list2 12]    0.
+cellBasisVector3      0.     0.   [lindex $list2 13]
+cellOrigin            0.     0.    0.\n"
+}
+
+
+} else {
+puts $fileid "
+
+set inputname   [lindex $list2 4];\n
+proc get_first_ts { xscfile } {\n\n
+     set fd \[open \$xscfile r\]
+     gets \$fd
+     gets \$fd
+     gets \$fd line
+     set ts \[lindex \$line 0\]
+     close \$fd
+     return \$ts\n
+}\n
+
+    bincoordinates     ./\$inputname.restart.coor
+    binvelocities      ./\$inputname.restart.vel
+    extendedSystem     ./\$inputname.restart.xsc\n
+
+    set firsttime \[get_first_ts ./\$inputname.restart.xsc\]
+    firsttimestep \$firsttime \n "
+
+}
+
+
+if { [lindex $list2 14] == 0} {
+
+puts $fileid "
+wrapWater           off
+wrapAll             off
+"
+} else {
+puts $fileid "
+wrapWater           on
+wrapAll             on
+"
+}
+
+
+
+puts $fileid "#############################################################\n## SIMULATION PARAMETERS                                   ##\n#############################################################\n## Input\n"
+puts $fileid "paraTypeCharmm      on \n
+parameters [lindex $list2 5];
+
+"
+
+puts $fileid "# Force-Field Parameters
+
+exclude             scaled1-4
+1-4scaling          1.0
+cutoff              12.0
+switching           on
+switchdist          10.0
+pairlistdist        14.0
+margin               3
+\n
+timestep            1.0
+nonbondedFreq       2
+fullElectFrequency  4
+stepspercycle       20\n"
+
+# For NPT ensembles
+
+puts $fileid "
+
+
+#PME (for full-system periodic electrostatics)
+PME                 yes
+PMEGridSpacing      1.0
+PMEpencils          1\n\n
+
+# No Langevin Constant Temperature Control we use other temperature control
+#langevin            on   ;# do langevin dynamics
+#langevinDamping     5     ;# damping coefficient (gamma) of 5/ps
+#langevinTemp        \$temperature
+#langevinHydrogen    no    ;# don't couple langevin bath to hydrogens\n\n
+
+# Constant Pressure Control (variable volume)
+useFlexibleCell       yes
+useConstantArea       no
+langevinPiston        on
+langevinPistonTarget  1.01325
+langevinPistonPeriod  200
+langevinPistonDecay   200
+langevinPistonTemp    [lindex $list2 18]\n"
+
+puts $fileid "  
+# Temperature reassignment parameters
+# To gradually decrease the temperature
+
+reassignFreq [lindex $list2 20]
+reassignTemp [lindex $list2 17]
+reassignIncr [expr {(-1)*[lindex $list2 19]}]
+reassignHold [lindex $list2 18] \n  "
+
+
+
+puts $fileid "\n# Output
+outputName          \$outputname
+restartname         \$outputname.restart
+dcdfile             \$outputname.dcd
+xstFile             \$outputname.xst\n
+
+restartfreq         [lindex $list2 6];
+dcdfreq             [lindex $list2 7];
+xstFreq             [lindex $list2 7];
+outputEnergies      [lindex $list2 7];
+outputPressure      [lindex $list2 7];"
+
+if { [lindex $list2 15] != "" } {
+puts $fileid "
+constraints on
+consref [lindex $list2 15]
+conskfile [lindex $list2 15]
+conskcol B
+# Harmonic constant of 1 kcal/molA
+constraintScaling 1.0 \n"
+
+}
+
+
+puts $fileid "#############################################################\n## EXTRA PARAMETERS                                        ##\n#############################################################\n## Put here any custom parameters that are specific to\n# this job (e.g., SMD, TclForces, etc...)\n\n#############################################################\n## EXECUTION SCRIPT                                        ##\n#############################################################\n"
+
+
+
+if { $i ==  0 } {
+
+puts $fileid "# Minimization\n
+minimize            [lindex $list2 8];
+reinitvels          \$temperature;"
+
+puts $fileid "run \$runSteps; \n"
+} else {
+puts $fileid "
+set stepP \[expr \$runSteps - \$firsttime \];\n
+run \$stepP ; \n"
+}
+
+close $fileid
+}
+}
+
+
+
+
+
+
 
 
 
@@ -1399,7 +1641,12 @@ global default1
  set hrestraint ""
  set sfactor 0.10
  set xsc ""
- 
+ set itemp 700
+ set etemp 600
+ set dcrtemp 10
+ set rasgntempFreq 25000
+
+
 # To get to know the usage of namdConfiguration
  set x [info exists [lindex $args 0]]
 
@@ -1417,7 +1664,8 @@ if { [llength $args] < 3 } {
     "expand"           { puts "Info) usage: namdConfiguration -type expand \[options...\]\n     Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -atommass;\n      -dWall; -fe; -stride; -numConfFiles"; return; }
     "forcecollapse"    { puts "Info) usage: namdConfiguration -type forcecollapse \[options...\]\n      Available options:\n      -coor; -psf; -par -outName; -inName; -temp;\n      -rFreq; -outfreq; -minSteps; -runsteps; -atommass; -dWall;\n      -cteForce; -stride; -numConfFiles"; return; }
     "grid"             { puts "Info) usage: namdConfiguration -type grid \[options...\]\n      Available options:\n      -coor; -psf; -par; -outName; -inName; -temp;\n      -prevConf; -rfreq; -outfreq; -minsteps; -runsteps; -gridforcefile;\n      -gridforcepotfile; -numConfFiles; -sfactor"; return; }
-    default     { error "error: incorrect argument: -type\nIndicating the type of file\n  -type equilibration\n  \(also available: contract, expand, forcecollapse, grid\) "}
+    "anneal"            { puts "Info) usage: namdConfiguration -type anneal \[options...\]\n      Available options:\n      -coor; -psf; -par; -outName; -inName; -prevConf;\n     -runsteps; -minsteps; -rfreq; -outfreq;\n   -numConfFiles; -a; -b; -c;\n    -wrap; -hrestraint; -xsc;\n    -itemp; -etemp; -dcrtemp; -rasgntempFreq"; return; }
+    default     { error "error: incorrect argument: -type\nIndicating the type of file\n  -type equilibration\n  \(also available: contract, expand, forcecollapse, grid, anneal\) "}
   }
 
 }
@@ -1456,6 +1704,11 @@ if { [llength $args] < 3 } {
       "-hrestraint" { set hrestraint $val; incr argnum; }
       "-sfactor" { set sfactor $val; incr argnum; }
       "-xsc" { set xsc $val; incr argnum; } 
+      "-itemp" { set itemp $val; incr argnum; }
+      "-etemp" { set etemp $val; incr argnum; }
+      "-dcrtemp" { set dcrtemp $val; incr argnum; }
+      "-rasgntempFreq" { set rasgntempFreq $val; incr argnum; }
+
       default     { error "error: aggregate: unknown option: $arg"}
     }
 #    lappend inputlist $val
@@ -1493,6 +1746,9 @@ if { [llength $args] < 3 } {
    "expand"           { if { $dWall == "" } {set dWall 70}; set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $atommass $dWall $fe $stride $numConfFiles]; namdCreateEX     $list2; }
    "forcecollapse"    { if { $dWall == "" } {mol load psf $psfFile pdb $pdbFile; set sel [atomselect 0 all]; set m1 [measure sumweights $sel weight mass]; unset sel; mol delete 0; set dWall [expr { pow(($m1*(10)/(6.022)), 1/(3.0))  }]; unset m1 }; if { $cteForce == "" } {set cteForce 0.072}; set list2 [list $pdbFile $psfFile $parFile $outName $inName $temp $rFreq $outFreq $minSteps $runSteps $atommass $dWall $cteForce $stride $numConfFiles]; CreateFC         $list2; }
    "grid"             { set list2 [list $pdbFile $psfFile $parFile $outName $prevConf $temp $inName $rFreq $outFreq $minSteps $runSteps $gridforcefile $gridforcepotfile $numConfFiles $sfactor]; CreateGrid       $list2; }
+
+   "anneal"    { if { $a == "calculate" || $b == "calculate" || $c == "calculate" } {mol load psf $psfFile namdbin $prevConf.coor; set sel [atomselect 0 all]; set v1 [measure minmax $sel]; unset sel; mol delete 0; set a [ expr { [lindex $v1 0 0] - [lindex $v1 1 0]  }]; set b [ expr { [lindex $v1 0 1] - [lindex $v1 1 1]  }]; set c [ expr { [lindex $v1 0 2] - [lindex $v1 1 2]  }]}; set list2 [list $pdbFile $psfFile $outName $runSteps $inName $parFile $rFreq $outFreq $minSteps $prevConf $numConfFiles $a $b $c $wrap $hrestraint $xsc $itemp $etemp $dcrtemp $rasgntempFreq]; namdAnneal $list2; }
+
    default     { error "error: incorrect argument: -type"}
   }
 
