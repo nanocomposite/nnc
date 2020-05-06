@@ -484,11 +484,14 @@ puts $fileid "#############################################################\n## 
 
 if { $i ==  0 } {
 
+if { [lindex $list2 8] != 0 } {
 puts $fileid "# Minimization\n
 minimize            [lindex $list2 8];
 reinitvels          \$temperature;"
-
+}
 puts $fileid "run \$runSteps; \n"
+
+
 } else {
 puts $fileid "
 set stepP \[expr \$runSteps - \$firsttime \];\n
