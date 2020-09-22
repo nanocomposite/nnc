@@ -5,6 +5,18 @@
 
 https://github.com/nanocomposite/Structures
 
+**nanocomposite** is free to use, our only request is to acknowledge the following publication:  
+
+<table>
+    <tr>
+        <td>
+<strong>Mechanical Characterization and Induced Crystallization in Nanocomposites of Thermoplastics and Carbon Nanotubes</strong>. E. R. Cruz-Chu, G. J. Villegas-Rodriguez, T. Jager, L. Valentini, N. Pugno, K. Gkagkas, F. Grater. <i>NPJ Computational Materials</i>. <b>2020</b> (6). Accepted.
+</td>
+    </tr>
+</table>
+
+
+
 
 **nanocomposite**  is integrated into a TCL-package to be used with [VMD](https://www.ks.uiuc.edu/Research/vmd/).   It employs the VMD-plugins PSFGEN and VOLMAP to create grid structures and exclusion grids, respectively.  It also prepares configuration files to carry out a variety of MD simulations with the molecular dynamics (MD) program [NAMD](https://www.ks.uiuc.edu/Research/namd/).  Thus, in order to use **nanocomposite**, it is required to have a working knowledge of VMD and NAMD.  To ease the usage of **nanocomposite**, a tutorial with the basic examples is available at:
 
