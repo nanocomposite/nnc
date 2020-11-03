@@ -33,7 +33,7 @@ The installation of **nanocomposite** proceeds as follows:
 
   lappend ::auto_path $DIR
 
-  where \$DIR is the path to the {\bf nanocomposite} directory in your local computer
+  where \$DIR is the path to the **nanocomposite** directory in your local computer
 
 * Load:
 
